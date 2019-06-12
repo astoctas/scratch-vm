@@ -20,6 +20,8 @@ const HIGH = 1;
 const MAX_SALIDAS = 4; 
 const MAX_ENTRADAS = 4; 
 const MAX_SERVOS = 2; 
+const THRESHOLD_HIGH = 768;
+const THRESHOLD_LOW = 256;
 
 var OUTPUT = class {
     /**
@@ -358,7 +360,8 @@ class Scratch3Interfaz {
             servos: [new SERVO(1),new SERVO(2)],
             analogValues: [0,0,0,0],
             analogThreshold: [512,512,512,512],
-            analogState: [0,0,0,0],
+            analogHIGH: [false, false, false, false],
+            analogLOW: [false, false, false, false],
             entradaActiva: 0
         }
     }
@@ -768,8 +771,15 @@ class Scratch3Interfaz {
         switch(args.ENTRADAS_OP_PARAM) {
             case 'encender': case 1: s.on(function(data){
                 i.analogValues[data.index -1 ] = data.value;
+                i.analogHIGH[data.index -1] = data.value > THRESHOLD_HIGH;
+                i.analogLOW[data.index -1] = data.value < THRESHOLD_LOW;
             }); break;
-            case 'apagar': case 2: s.off(); break;
+            case 'apagar': case 2: 
+                s.off(); 
+                i.analogValues[args.ENTRADAS_OP_PARAM -1 ] = 0;
+                i.analogHIGH[args.ENTRADAS_OP_PARAM -1] = false;
+                i.analogLOW[args.ENTRADAS_OP_PARAM -1] = false;
+                break;
             default: s.off();
         }
     };
@@ -787,8 +797,8 @@ class Scratch3Interfaz {
         i.entradaActiva = args.ENTRADAS_PARAM;
         var v = false;
         switch(args.ENTRADA_ESTADO) {
-            case 'alto': case 1:  v =  i.analogValues[args.ENTRADAS_PARAM - 1] > 768 ; break;
-            case 'bajo': case 0:  v =  i.analogValues[args.ENTRADAS_PARAM - 1] < 256; break;
+            case 'alto': case 1:  v =  i.analogHIGH[args.ENTRADAS_PARAM - 1] ; break;
+            case 'bajo': case 0:  v =  i.analogLOW[args.ENTRADAS_PARAM - 1] ; break;
         }
         return v;
     }
@@ -798,8 +808,8 @@ class Scratch3Interfaz {
         var i = this.interfaz;
         var v = false;
         switch(args.ENTRADA_ESTADO) {
-            case 'alto': case 1:  v =  i.analogValues[args.ENTRADAS_PARAM - 1] > 768 ; break;
-            case 'bajo': case 0:  v =  i.analogValues[args.ENTRADAS_PARAM - 1] < 256; break;
+            case 'alto': case 1:  v =  i.analogHIGH[args.ENTRADAS_PARAM - 1]  ; break;
+            case 'bajo': case 0:  v =  i.analogLOW[args.ENTRADAS_PARAM - 1] ; break;
         }
         return v;
     }
