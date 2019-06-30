@@ -283,7 +283,7 @@ var  DIGITAL = class {
    * Write(): Writes data into register
    *
    * @param register {Integer} register to read
-   * @param data {Array of bytes} data to write
+   * @param data {Integer} data to write
    */    
     write(register, data) { 
       socket.emit('I2C', { address: this.address, register: register, method: 'write', param: data });
