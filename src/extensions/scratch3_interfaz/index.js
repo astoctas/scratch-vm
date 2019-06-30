@@ -347,6 +347,39 @@ class Device {
     })
   }
 
+}
+
+var   LCD = class {
+    /**
+   * class LCD
+   * @constructor
+   *
+   * 
+   */
+    constructor() {
+    }
+
+    /**
+   * encender(): Turns on
+   *
+   */
+  encender() {
+      socket.emit('LCD', { method: 'on', param: false, param2: false });
+    }
+    /**
+   * apagar(): Turns off
+   *
+   */
+  apagar() {
+      socket.emit('LCD', { method: 'off', param: false, param2: false });
+    }
+    /**
+   * silenciar(): Turns silent
+   *
+   */
+  silenciar() {
+      socket.emit('LCD', { method: 'silence', param: false, param2: false });
+    }
   }
 
 class Scratch3Interfaz {
@@ -355,6 +388,7 @@ class Scratch3Interfaz {
         //this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
 
         this.interfaz = {
+            lcd: new LCD,
             salidas: [new OUTPUT(1),new OUTPUT(2),new OUTPUT(3),new OUTPUT(4)],
             entradas: [new ANALOG(1),new ANALOG(2),new ANALOG(3),new ANALOG(4)],
             servos: [new SERVO(1),new SERVO(2)],
@@ -664,6 +698,22 @@ class Scratch3Interfaz {
                         }                    
                     }
                 },'---',
+                {
+                    opcode: 'lcdAccion',
+                    text: formatMessage({
+                        id: 'interfaz.lcdAccion',
+                        default: 'LCD [LCD_OP]',
+                        description: '[enciende/apaga/silencia] el display LCD incorporado'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        LCD_OP: {
+                            type: ArgumentType.STRING,
+                            menu: 'lcd_op',
+                            defaultValue: 'encender' 
+                        }                    
+                    }
+                }
 
             ],
             menus: {
@@ -677,6 +727,7 @@ class Scratch3Interfaz {
                 direccion: ['a','b'],
                 estados: ['alto','bajo'],
                 operadores: ['>','<', '='],
+                lcd_op: ['encender','apagar', 'silenciar'],
             }
         };
     }
@@ -846,7 +897,14 @@ class Scratch3Interfaz {
         s.position( MathUtil.clamp(Math.abs(args.SERVOS_POSICION),0,180));
     };
 
-
+    lcdAccion (args, util) {
+        switch(args.LCD_OP) {
+            case 'encender': case 1:  this.interfaz.lcd.encender(); break;
+            case 'apagar': case 3: this.interfaz.lcd.apagar(); break;
+            case 'silenciar': case 4: this.interfaz.lcd.silenciar(); break;
+            default: s.off();
+        }
+    };
 }
 
 module.exports = Scratch3Interfaz;
