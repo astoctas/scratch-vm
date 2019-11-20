@@ -1,4 +1,5 @@
 const ArgumentType = require('../../extension-support/argument-type');
+const Color = require('../../util/color');
 const BlockType = require('../../extension-support/block-type');
 const TargetType = require('../../extension-support/target-type');
 const formatMessage = require('format-message');
@@ -12,14 +13,15 @@ const io = require('socket.io-client');
 
 var socket = io.connect('http://localhost:4268');
 
-//const blockIconURI = 'data:image/svg+xml;utf8;base64,PD94bWwgdmVyc2lvbj0iMS4wIj8+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBoZWlnaHQ9IjUxMnB4IiB2aWV3Qm94PSItMTA5IDAgNTEyIDUxMiIgd2lkdGg9IjUxMnB4Ij48cGF0aCBkPSJtMjguNDc2NTYyIDE5Ny4yNDIxODhjLTE1LjcwMzEyNCAwLTI4LjQ3NjU2MiAxMi43NzM0MzctMjguNDc2NTYyIDI4LjQ3NjU2MnYxMjQuNTY2NDA2YzAgMTUuNzAzMTI1IDEyLjc3MzQzOCAyOC40NzY1NjMgMjguNDc2NTYyIDI4LjQ3NjU2MyAxNS43MDMxMjYgMCAyOC40NzY1NjMtMTIuNzczNDM4IDI4LjQ3NjU2My0yOC40NzY1NjN2LTEyNC41NzAzMTJjMC0xNS42OTkyMTktMTIuNzc3MzQ0LTI4LjQ3MjY1Ni0yOC40NzY1NjMtMjguNDcyNjU2em0wIDAiIGZpbGw9IiNjYWMwYzkiLz48cGF0aCBkPSJtMjguNDc2NTYyIDM0NC4wNTg1OTRjLTE1LjcwMzEyNCAwLTI4LjQ3NjU2Mi0xMi43NzczNDQtMjguNDc2NTYyLTI4LjQ3NjU2M3YzNC43MDMxMjVjMCAxNS43MDMxMjUgMTIuNzczNDM4IDI4LjQ3NjU2MyAyOC40NzY1NjIgMjguNDc2NTYzIDE1LjcwMzEyNiAwIDI4LjQ3NjU2My0xMi43NzM0MzggMjguNDc2NTYzLTI4LjQ3NjU2M3YtMzQuNzAzMTI1YzAgMTUuNjk5MjE5LTEyLjc3NzM0NCAyOC40NzY1NjMtMjguNDc2NTYzIDI4LjQ3NjU2M3ptMCAwIiBmaWxsPSIjYmJiMGJhIi8+PHBhdGggZD0ibTQ5LjQyOTY4OCA0MjAuNjcxODc1Yy00LjE1MjM0NCAwLTcuNTE5NTMyLTMuMzY3MTg3LTcuNTE5NTMyLTcuNTIzNDM3di0yMC45NTMxMjZjMC03LjQwNjI1LTYuMDI3MzQ0LTEzLjQzMzU5My0xMy40MzM1OTQtMTMuNDMzNTkzcy0xMy40MzM1OTMgNi4wMjczNDMtMTMuNDMzNTkzIDEzLjQzMzU5M3YyMC45NTMxMjZjMCA0LjE1NjI1LTMuMzY3MTg4IDcuNTIzNDM3LTcuNTE5NTMxIDcuNTIzNDM3LTQuMTU2MjUgMC03LjUyMzQzOC0zLjM2NzE4Ny03LjUyMzQzOC03LjUyMzQzN3YtMjAuOTUzMTI2YzAtMTUuNzAzMTI0IDEyLjc3MzQzOC0yOC40NzY1NjIgMjguNDc2NTYyLTI4LjQ3NjU2MiAxNS43MDMxMjYgMCAyOC40NzY1NjMgMTIuNzczNDM4IDI4LjQ3NjU2MyAyOC40NzY1NjJ2MjAuOTUzMTI2YzAgNC4xNTYyNS0zLjM2NzE4NyA3LjUyMzQzNy03LjUyMzQzNyA3LjUyMzQzN3ptMCAwIiBmaWxsPSIjOGM4MDhhIi8+PHBhdGggZD0ibTE3OS4wMzkwNjIgMTcwLjkyNTc4MWgtNjMuNTE1NjI0Yy00LjE1MjM0NCAwLTcuNTE5NTMyIDMuMzcxMDk0LTcuNTE5NTMyIDcuNTIzNDM4djI2LjMxMjVjMCA0LjE1NjI1IDMuMzY3MTg4IDcuNTIzNDM3IDcuNTE5NTMyIDcuNTIzNDM3aDYzLjUxNTYyNGM0LjE1NjI1IDAgNy41MjM0MzgtMy4zNjcxODcgNy41MjM0MzgtNy41MjM0Mzd2LTI2LjMxMjVjMC00LjE1NjI1LTMuMzY3MTg4LTcuNTIzNDM4LTcuNTIzNDM4LTcuNTIzNDM4em0wIDAiIGZpbGw9IiM5YzhmOWEiLz48cGF0aCBkPSJtMTQ3LjI4MTI1IDgxLjU0Njg3NWMtNC4xNTIzNDQgMC03LjUxOTUzMS0zLjM2NzE4Ny03LjUxOTUzMS03LjUxOTUzMXYtMjMuNTY2NDA2YzAtNC4xNTIzNDQgMy4zNjcxODctNy41MTk1MzIgNy41MTk1MzEtNy41MTk1MzIgNC4xNTYyNSAwIDcuNTIzNDM4IDMuMzY3MTg4IDcuNTIzNDM4IDcuNTE5NTMydjIzLjU2NjQwNmMwIDQuMTUyMzQ0LTMuMzY3MTg4IDcuNTE5NTMxLTcuNTIzNDM4IDcuNTE5NTMxem0wIDAiIGZpbGw9IiM4YzgwOGEiLz48cGF0aCBkPSJtMTEzLjE5MTQwNiAzMzYuNTM1MTU2aC00MS45MTAxNTZjLTQuMTUyMzQ0IDAtNy41MjM0MzggMy4zNjcxODgtNy41MjM0MzggNy41MjM0Mzh2MTEzLjAzNTE1NmMwIDIuNjk1MzEyIDEuNDQ1MzEzIDUuMTg3NSAzLjc4NTE1NyA2LjUyNzM0NCAyLjMzOTg0MyAxLjMzOTg0NCA1LjIxODc1IDEuMzI0MjE4IDcuNTQ2ODc1LS4wNDI5NjkgNS4xODM1OTQtMy4wNDI5NjkgMTEuMTEzMjgxLTQuNjUyMzQ0IDE3LjE0NDUzMS00LjY1MjM0NHMxMS45NjA5MzcgMS42MDkzNzUgMTcuMTQ4NDM3IDQuNjUyMzQ0YzEuMTc1NzgyLjY5MTQwNiAyLjQ5MjE4OCAxLjAzNTE1NiAzLjgwODU5NCAxLjAzNTE1NiAxLjI4OTA2MyAwIDIuNTc4MTI1LS4zMzIwMzEgMy43MzgyODItLjk5MjE4NyAyLjMzOTg0My0xLjMzOTg0NCAzLjc4MTI1LTMuODMyMDMyIDMuNzgxMjUtNi41MjczNDR2LTExMy4wMzUxNTZjMC00LjE1NjI1LTMuMzY3MTg4LTcuNTIzNDM4LTcuNTE5NTMyLTcuNTIzNDM4em0wIDAiIGZpbGw9IiNjYWMwYzkiLz48cGF0aCBkPSJtMjIzLjI4NTE1NiAzMzYuNTM1MTU2aC00MS45MTAxNTZjLTQuMTU2MjUgMC03LjUxOTUzMSAzLjM2NzE4OC03LjUxOTUzMSA3LjUyMzQzOHYxMTMuMDM1MTU2YzAgMi42OTUzMTIgMS40NDE0MDYgNS4xODc1IDMuNzgxMjUgNi41MjczNDQgMi4zMzk4NDMgMS4zMzk4NDQgNS4yMTg3NSAxLjMyNDIxOCA3LjU0Mjk2OS0uMDQyOTY5IDUuMTg3NS0zLjA0Mjk2OSAxMS4xMTcxODctNC42NTIzNDQgMTcuMTQ4NDM3LTQuNjUyMzQ0czExLjk2MDkzNyAxLjYwOTM3NSAxNy4xNDg0MzcgNC42NTIzNDRjMS4xNzU3ODIuNjkxNDA2IDIuNDkyMTg4IDEuMDM1MTU2IDMuODA4NTk0IDEuMDM1MTU2IDEuMjg5MDYzIDAgMi41NzgxMjUtLjMzMjAzMSAzLjczODI4Mi0uOTkyMTg3IDIuMzM5ODQzLTEuMzM5ODQ0IDMuNzgxMjUtMy44MzIwMzIgMy43ODEyNS02LjUyNzM0NHYtMTEzLjAzNTE1NmMwLTQuMTU2MjUtMy4zNjcxODgtNy41MjM0MzgtNy41MTk1MzItNy41MjM0Mzh6bTAgMCIgZmlsbD0iI2NhYzBjOSIvPjxwYXRoIGQ9Im0xMTMuMTkxNDA2IDMzNi41MzUxNTZoLTQxLjkxMDE1NmMtNC4xNTIzNDQgMC03LjUyMzQzOCAzLjM2NzE4OC03LjUyMzQzOCA3LjUyMzQzOHYyNy4wNzQyMThoNTYuOTUzMTI2di0yNy4wNzQyMThjMC00LjE1NjI1LTMuMzY3MTg4LTcuNTIzNDM4LTcuNTE5NTMyLTcuNTIzNDM4em0wIDAiIGZpbGw9IiNiYmIwYmEiLz48cGF0aCBkPSJtMjIzLjI4NTE1NiAzMzYuNTM1MTU2aC00MS45MTAxNTZjLTQuMTU2MjUgMC03LjUxOTUzMSAzLjM2NzE4OC03LjUxOTUzMSA3LjUyMzQzOHYyNy4wNzQyMThoNTYuOTQ5MjE5di0yNy4wNzQyMThjMC00LjE1NjI1LTMuMzY3MTg4LTcuNTIzNDM4LTcuNTE5NTMyLTcuNTIzNDM4em0wIDAiIGZpbGw9IiNiYmIwYmEiLz48cGF0aCBkPSJtMjMyLjAzNTE1NiA5My4yODEyNWMtNi44OTQ1MzEgMC0xMy41MDM5MDYgMi4xMTcxODgtMTkuMTEzMjgxIDYuMTE3MTg4LTEuOTgwNDY5IDEuNDE0MDYyLTMuMTUyMzQ0IDMuNjkxNDA2LTMuMTUyMzQ0IDYuMTI1djQxLjQyOTY4N2MwIDIuNDI5Njg3IDEuMTcxODc1IDQuNzEwOTM3IDMuMTUyMzQ0IDYuMTI1IDUuNjA5Mzc1IDQgMTIuMjE4NzUgNi4xMTMyODEgMTkuMTEzMjgxIDYuMTEzMjgxIDE4LjE3MTg3NSAwIDMyLjk1MzEyNS0xNC43ODEyNSAzMi45NTMxMjUtMzIuOTUzMTI1cy0xNC43ODEyNS0zMi45NTcwMzEtMzIuOTUzMTI1LTMyLjk1NzAzMXptMCAwIiBmaWxsPSIjY2FjMGM5Ii8+PHBhdGggZD0ibTgxLjY0NDUzMSA5OS4zOTg0MzhjLTUuNjA5Mzc1LTQtMTIuMjE4NzUtNi4xMTcxODgtMTkuMTEzMjgxLTYuMTE3MTg4LTE4LjE3MTg3NSAwLTMyLjk1NzAzMSAxNC43ODUxNTYtMzIuOTU3MDMxIDMyLjk1NzAzMXMxNC43ODUxNTYgMzIuOTUzMTI1IDMyLjk1NzAzMSAzMi45NTMxMjVjNi44OTA2MjUgMCAxMy41LTIuMTEzMjgxIDE5LjExMzI4MS02LjExMzI4MSAxLjk3NjU2My0xLjQxNDA2MyAzLjE1MjM0NC0zLjY5NTMxMyAzLjE1MjM0NC02LjEyNXYtNDEuNDI5Njg3YzAtMi40MzM1OTQtMS4xNzU3ODEtNC43MTQ4NDQtMy4xNTIzNDQtNi4xMjV6bTAgMCIgZmlsbD0iI2NhYzBjOSIvPjxwYXRoIGQ9Im0yMzIuMDM1MTU2IDEzNC42OTUzMTJjLTYuODk0NTMxIDAtMTMuNTAzOTA2LTIuMTEzMjgxLTE5LjExMzI4MS02LjExMzI4MS0xLjk4MDQ2OS0xLjQxNDA2Mi0zLjE1MjM0NC0zLjY5NTMxMi0zLjE1MjM0NC02LjEyNXYyNC40OTYwOTRjMCAyLjQyOTY4NyAxLjE3MTg3NSA0LjcxMDkzNyAzLjE1MjM0NCA2LjEyNSA1LjYwOTM3NSA0IDEyLjIxODc1IDYuMTEzMjgxIDE5LjExMzI4MSA2LjExMzI4MSAxOC4xNzE4NzUgMCAzMi45NTMxMjUtMTQuNzgxMjUgMzIuOTUzMTI1LTMyLjk1MzEyNSAwLTQuMzI4MTI1LS44NDM3NS04LjQ2MDkzNy0yLjM2NzE4Ny0xMi4yNS00Ljg3NSAxMi4xMjEwOTQtMTYuNzQyMTg4IDIwLjcwNzAzMS0zMC41ODU5MzggMjAuNzA3MDMxem0wIDAiIGZpbGw9IiNiYmIwYmEiLz48cGF0aCBkPSJtODEuNjQ0NTMxIDEyOC41ODIwMzFjLTUuNjA5Mzc1IDQtMTIuMjE4NzUgNi4xMTMyODEtMTkuMTEzMjgxIDYuMTEzMjgxLTEzLjg0Mzc1IDAtMjUuNzE0ODQ0LTguNTg1OTM3LTMwLjU4NTkzOC0yMC43MDcwMzEtMS41MjM0MzcgMy43ODkwNjMtMi4zNzEwOTMgNy45MjE4NzUtMi4zNzEwOTMgMTIuMjUgMCAxOC4xNzE4NzUgMTQuNzg1MTU2IDMyLjk1MzEyNSAzMi45NTcwMzEgMzIuOTUzMTI1IDYuODkwNjI1IDAgMTMuNS0yLjExMzI4MSAxOS4xMTMyODEtNi4xMTMyODEgMS45NzY1NjMtMS40MTQwNjMgMy4xNTIzNDQtMy42OTUzMTMgMy4xNTIzNDQtNi4xMjV2LTI0LjQ5NjA5NGMwIDIuNDI5Njg4LTEuMTc1NzgxIDQuNzEwOTM4LTMuMTUyMzQ0IDYuMTI1em0wIDAiIGZpbGw9IiNiYmIwYmEiLz48cGF0aCBkPSJtMjAyLjI0NjA5NCA2Ni41MDM5MDZoLTEwOS45Mjk2ODhjLTEyLjQ0MTQwNiAwLTIyLjU2MjUgMTAuMTI1LTIyLjU2MjUgMjIuNTY2NDA2djc0LjMzNTkzOGMwIDEyLjQ0MTQwNiAxMC4xMjEwOTQgMjIuNTYyNSAyMi41NjI1IDIyLjU2MjVoMTA5LjkyOTY4OGMxMi40NDE0MDYgMCAyMi41NjY0MDYtMTAuMTIxMDk0IDIyLjU2NjQwNi0yMi41NjI1di03NC4zMzU5MzhjMC0xMi40NDE0MDYtMTAuMTI1LTIyLjU2NjQwNi0yMi41NjY0MDYtMjIuNTY2NDA2em0wIDAiIGZpbGw9IiNlNmUyZTYiLz48cGF0aCBkPSJtMjAyLjI0NjA5NCAxNTcuMjYxNzE5aC0xMDkuOTI5Njg4Yy0xMi40NDE0MDYgMC0yMi41NjI1LTEwLjEyNS0yMi41NjI1LTIyLjU2NjQwN3YyOC43MTA5MzhjMCAxMi40NDE0MDYgMTAuMTIxMDk0IDIyLjU2MjUgMjIuNTYyNSAyMi41NjI1aDEwOS45Mjk2ODhjMTIuNDQxNDA2IDAgMjIuNTY2NDA2LTEwLjEyMTA5NCAyMi41NjY0MDYtMjIuNTYyNXYtMjguNzEwOTM4YzAgMTIuNDQxNDA3LTEwLjEyNSAyMi41NjY0MDctMjIuNTY2NDA2IDIyLjU2NjQwN3ptMCAwIiBmaWxsPSIjZDhkMWQ3Ii8+PHBhdGggZD0ibTExNC42MTMyODEgMTM1Ljc4MTI1Yy02LjMyNDIxOSAwLTExLjQ2ODc1LTUuMTQ0NTMxLTExLjQ2ODc1LTExLjQ2ODc1czUuMTQ0NTMxLTExLjQ2NDg0NCAxMS40Njg3NS0xMS40NjQ4NDRjNi4zMjAzMTMgMCAxMS40NjQ4NDQgNS4xNDA2MjUgMTEuNDY0ODQ0IDExLjQ2NDg0NHMtNS4xNDQ1MzEgMTEuNDY4NzUtMTEuNDY0ODQ0IDExLjQ2ODc1em0wIDAiIGZpbGw9IiM4YzgwOGEiLz48cGF0aCBkPSJtMTc5Ljk1MzEyNSAxMzUuNzgxMjVjLTYuMzI0MjE5IDAtMTEuNDY0ODQ0LTUuMTQ0NTMxLTExLjQ2NDg0NC0xMS40Njg3NXM1LjE0NDUzMS0xMS40NjQ4NDQgMTEuNDY0ODQ0LTExLjQ2NDg0NGM2LjMyNDIxOSAwIDExLjQ2ODc1IDUuMTQwNjI1IDExLjQ2ODc1IDExLjQ2NDg0NHMtNS4xNDQ1MzEgMTEuNDY4NzUtMTEuNDY4NzUgMTEuNDY4NzV6bTAgMCIgZmlsbD0iIzhjODA4YSIvPjxwYXRoIGQ9Im0xNDcuMjgxMjUgMGMtMTUuOTg0Mzc1IDAtMjguOTkyMTg4IDEzLjAwNzgxMi0yOC45OTIxODggMjguOTkyMTg4IDAgMTUuOTg0Mzc0IDEzLjAwNzgxMyAyOC45OTIxODcgMjguOTkyMTg4IDI4Ljk5MjE4NyAxNS45ODgyODEgMCAyOC45OTIxODgtMTMuMDA3ODEzIDI4Ljk5MjE4OC0yOC45OTIxODcgMC0xNS45ODQzNzYtMTMuMDAzOTA3LTI4Ljk5MjE4OC0yOC45OTIxODgtMjguOTkyMTg4em0wIDAiIGZpbGw9IiNmZjQ3NTUiLz48cGF0aCBkPSJtMTQ3LjI4MTI1IDM1LjIxNDg0NGMtMTEuOTQ1MzEyIDAtMjIuMjI2NTYyLTcuMjY1NjI1LTI2LjY2MDE1Ni0xNy42MDkzNzUtMS40OTYwOTQgMy41LTIuMzMyMDMyIDcuMzQ3NjU2LTIuMzMyMDMyIDExLjM4NjcxOSAwIDE1Ljk4NDM3NCAxMy4wMDc4MTMgMjguOTkyMTg3IDI4Ljk5MjE4OCAyOC45OTIxODdzMjguOTkyMTg4LTEzLjAwNzgxMyAyOC45OTIxODgtMjguOTkyMTg3YzAtNC4wMzkwNjMtLjgzMjAzMi03Ljg4NjcxOS0yLjMzMjAzMi0xMS4zODY3MTktNC40MzM1OTQgMTAuMzQzNzUtMTQuNzEwOTM3IDE3LjYwOTM3NS0yNi42NjAxNTYgMTcuNjA5Mzc1em0wIDAiIGZpbGw9IiNmYzJiM2EiLz48cGF0aCBkPSJtOTIuMjM0Mzc1IDQ0My44ODI4MTJjLTI3LjAxNTYyNSAwLTQ4Ljk5NjA5NCAyMS45ODA0NjktNDguOTk2MDk0IDQ4Ljk5NjA5NHYxMS41OTc2NTZjMCA0LjE1NjI1IDMuMzcxMDk0IDcuNTIzNDM4IDcuNTIzNDM4IDcuNTIzNDM4aDgyLjk0NTMxMmM0LjE1NjI1IDAgNy41MjM0MzgtMy4zNjcxODggNy41MjM0MzgtNy41MjM0Mzh2LTExLjU5NzY1NmMwLTI3LjAxNTYyNS0yMS45ODA0NjktNDguOTk2MDk0LTQ4Ljk5NjA5NC00OC45OTYwOTR6bTAgMCIgZmlsbD0iIzljOGY5YSIvPjxwYXRoIGQ9Im01MC43NjE3MTkgNTEyaDgyLjk0NTMxMmM0LjE1NjI1IDAgNy41MjM0MzgtMy4zNjcxODggNy41MjM0MzgtNy41MjM0Mzh2LTExLjU5NzY1NmMwLTMuODE2NDA2LS40NTMxMjUtNy41MjM0MzctMS4yODEyNS0xMS4wODk4NDRoLTk1LjQyOTY4OGMtLjgyODEyNSAzLjU2NjQwNy0xLjI4MTI1IDcuMjczNDM4LTEuMjgxMjUgMTEuMDg5ODQ0djExLjU5NzY1NmMwIDQuMTU2MjUgMy4zNzEwOTQgNy41MjM0MzggNy41MjM0MzggNy41MjM0Mzh6bTAgMCIgZmlsbD0iIzhjODA4YSIvPjxwYXRoIGQ9Im0yNjYuMDg5ODQ0IDE5Ny4yNDIxODhjMTUuNjk5MjE4IDAgMjguNDc2NTYyIDEyLjc3MzQzNyAyOC40NzY1NjIgMjguNDc2NTYydjEyNC41NjY0MDZjMCAxNS43MDMxMjUtMTIuNzc3MzQ0IDI4LjQ3NjU2My0yOC40NzY1NjIgMjguNDc2NTYzLTE1LjcwMzEyNSAwLTI4LjQ3NjU2My0xMi43NzM0MzgtMjguNDc2NTYzLTI4LjQ3NjU2M3YtMTI0LjU3MDMxMmMwLTE1LjY5OTIxOSAxMi43NzM0MzgtMjguNDcyNjU2IDI4LjQ3NjU2My0yOC40NzI2NTZ6bTAgMCIgZmlsbD0iI2NhYzBjOSIvPjxwYXRoIGQ9Im0yNjYuMDg5ODQ0IDM0NC4wNTg1OTRjMTUuNjk5MjE4IDAgMjguNDc2NTYyLTEyLjc3NzM0NCAyOC40NzY1NjItMjguNDc2NTYzdjM0LjcwMzEyNWMwIDE1LjcwMzEyNS0xMi43NzczNDQgMjguNDc2NTYzLTI4LjQ3NjU2MiAyOC40NzY1NjMtMTUuNzAzMTI1IDAtMjguNDc2NTYzLTEyLjc3MzQzOC0yOC40NzY1NjMtMjguNDc2NTYzdi0zNC43MDMxMjVjMCAxNS42OTkyMTkgMTIuNzczNDM4IDI4LjQ3NjU2MyAyOC40NzY1NjMgMjguNDc2NTYzem0wIDAiIGZpbGw9IiNiYmIwYmEiLz48cGF0aCBkPSJtMjQ1LjEzNjcxOSA0MjAuNjcxODc1YzQuMTUyMzQzIDAgNy41MTk1MzEtMy4zNjcxODcgNy41MTk1MzEtNy41MjM0Mzd2LTIwLjk1MzEyNmMwLTcuNDA2MjUgNi4wMjczNDQtMTMuNDMzNTkzIDEzLjQzMzU5NC0xMy40MzM1OTNzMTMuNDMzNTk0IDYuMDI3MzQzIDEzLjQzMzU5NCAxMy40MzM1OTN2MjAuOTUzMTI2YzAgNC4xNTYyNSAzLjM2NzE4NyA3LjUyMzQzNyA3LjUxOTUzMSA3LjUyMzQzNyA0LjE1NjI1IDAgNy41MjM0MzctMy4zNjcxODcgNy41MjM0MzctNy41MjM0Mzd2LTIwLjk1MzEyNmMwLTE1LjcwMzEyNC0xMi43NzM0MzctMjguNDc2NTYyLTI4LjQ3NjU2Mi0yOC40NzY1NjJzLTI4LjQ3NjU2MyAxMi43NzM0MzgtMjguNDc2NTYzIDI4LjQ3NjU2MnYyMC45NTMxMjZjMCA0LjE1NjI1IDMuMzY3MTg4IDcuNTIzNDM3IDcuNTIzNDM4IDcuNTIzNDM3em0wIDAiIGZpbGw9IiM4YzgwOGEiLz48cGF0aCBkPSJtMjQ1LjEzMjgxMiAxOTcuMjQyMTg4aC0xOTUuNzAzMTI0Yy00LjE1MjM0NCAwLTcuNTE5NTMyIDMuMzY3MTg3LTcuNTE5NTMyIDcuNTE5NTMxdjEzOS4yOTY4NzVjMCA0LjE1MjM0NCAzLjM2NzE4OCA3LjUxOTUzMSA3LjUxOTUzMiA3LjUxOTUzMWgxOTUuNzAzMTI0YzQuMTU2MjUgMCA3LjUyMzQzOC0zLjM2NzE4NyA3LjUyMzQzOC03LjUxOTUzMXYtMTM5LjI5Njg3NWMwLTQuMTUyMzQ0LTMuMzY3MTg4LTcuNTE5NTMxLTcuNTIzNDM4LTcuNTE5NTMxem0wIDAiIGZpbGw9IiNlNmUyZTYiLz48cGF0aCBkPSJtNDEuOTEwMTU2IDMxNi45ODA0Njl2MjcuMDc4MTI1YzAgNC4xNTIzNDQgMy4zNjcxODggNy41MTk1MzEgNy41MTk1MzIgNy41MTk1MzFoMTk1LjcwMzEyNGM0LjE1NjI1IDAgNy41MjM0MzgtMy4zNjcxODcgNy41MjM0MzgtNy41MTk1MzF2LTI3LjA3ODEyNXptMCAwIiBmaWxsPSIjZDhkMWQ3Ii8+PHBhdGggZD0ibTIwMi4zMzIwMzEgNDQzLjg4MjgxMmMtMjcuMDE5NTMxIDAtNDguOTk2MDkzIDIxLjk4MDQ2OS00OC45OTYwOTMgNDguOTk2MDk0djExLjU5NzY1NmMwIDQuMTU2MjUgMy4zNjcxODcgNy41MjM0MzggNy41MTk1MzEgNy41MjM0MzhoODIuOTQ5MjE5YzQuMTU2MjUgMCA3LjUyMzQzNy0zLjM2NzE4OCA3LjUyMzQzNy03LjUyMzQzOHYtMTEuNTk3NjU2Yy0uMDAzOTA2LTI3LjAxNTYyNS0yMS45ODA0NjktNDguOTk2MDk0LTQ4Ljk5NjA5NC00OC45OTYwOTR6bTAgMCIgZmlsbD0iIzljOGY5YSIvPjxwYXRoIGQ9Im0xNjAuODU1NDY5IDUxMmg4Mi45NDkyMTljNC4xNTIzNDMgMCA3LjUxOTUzMS0zLjM2NzE4OCA3LjUxOTUzMS03LjUyMzQzOHYtMTEuNTk3NjU2YzAtMy44MTY0MDYtLjQ0OTIxOS03LjUyMzQzNy0xLjI4MTI1LTExLjA4OTg0NGgtOTUuNDI1NzgxYy0uODMyMDMyIDMuNTY2NDA3LTEuMjgxMjUgNy4yNzM0MzgtMS4yODEyNSAxMS4wODk4NDR2MTEuNTk3NjU2YzAgNC4xNTYyNSAzLjM2NzE4NyA3LjUyMzQzOCA3LjUxOTUzMSA3LjUyMzQzOHptMCAwIiBmaWxsPSIjOGM4MDhhIi8+PC9zdmc+Cg==';
 const blockIconURI = "data:image/svg+xml;utf8;base64,PD94bWwgdmVyc2lvbj0iMS4wIj8+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBoZWlnaHQ9IjUxMnB4IiB2aWV3Qm94PSItNDYgMCA1MTIgNTEyIiB3aWR0aD0iNTEycHgiPjxwYXRoIGQ9Im00MTAgNDMwdjcyaC02MHYtMTEyaDIwYzIyLjA4OTg0NCAwIDQwIDE3LjkxMDE1NiA0MCA0MHptMCAwIiBmaWxsPSIjNjc2ZTc0Ii8+PHBhdGggZD0ibTMxMC4wNTA3ODEgOTBoLTIwMC4xMDE1NjJjLTIyLjA4OTg0NCAwLTQwIDE3LjkxMDE1Ni00MCA0MHYxNDBjMCAyMi4wODk4NDQgMTcuOTEwMTU2IDQwIDQwIDQwaDIwMC4xMDE1NjJjMjIuMDg5ODQ0IDAgNDAtMTcuOTEwMTU2IDQwLTQwdi0xNDBjMC0yMi4wODk4NDQtMTcuOTEwMTU2LTQwLTQwLTQwem0wIDAiIGZpbGw9IiNmZjgwYWMiLz48cGF0aCBkPSJtMzEwIDM1MGgtMjAwYy0yMi4wODk4NDQgMC00MCAxNy45MTAxNTYtNDAgNDB2MTEyaDI4MHYtMTEyYzAtMjIuMDg5ODQ0LTE3LjkxMDE1Ni00MC00MC00MHptMCAwIiBmaWxsPSIjZmY4MGFjIi8+PGcgZmlsbD0iI2ZmZjM1YyI+PHBhdGggZD0ibTMxMCAxNjBjMCAxNi41NzAzMTItMTMuNDI5Njg4IDMwLTMwIDMwcy0zMC0xMy40Mjk2ODgtMzAtMzAgMTMuNDI5Njg4LTMwIDMwLTMwIDMwIDEzLjQyOTY4OCAzMCAzMHptMCAwIi8+PHBhdGggZD0ibTI3MCAyMzBoLTEyMGMtMTEuMDUwNzgxIDAtMjAgOC45NDkyMTktMjAgMjB2NjBoMTYwdi02MGMwLTExLjA1MDc4MS04Ljk0OTIxOS0yMC0yMC0yMHptMCAwIi8+PHBhdGggZD0ibTI3MCA0NTB2NTJoLTEyMHYtNTJjMC0xMS4wNTA3ODEgOC45NDkyMTktMjAgMjAtMjBoODBjMTEuMDUwNzgxIDAgMjAgOC45NDkyMTkgMjAgMjB6bTAgMCIvPjwvZz48cGF0aCBkPSJtMTUwIDMxMGgxMjB2NDBoLTEyMHptMCAwIiBmaWxsPSIjNjc2ZTc0Ii8+PHBhdGggZD0ibTI3MCA3MHYyMGgtMTIwdi0yMGMwLTExLjA1MDc4MSA4Ljk0OTIxOS0yMCAyMC0yMGg4MGMxMS4wNTA3ODEgMCAyMCA4Ljk0OTIxOSAyMCAyMHptMCAwIiBmaWxsPSIjNjc2ZTc0Ii8+PHBhdGggZD0ibTE3MCAxNjBjMCAxNi41NzAzMTItMTMuNDI5Njg4IDMwLTMwIDMwcy0zMC0xMy40Mjk2ODgtMzAtMzAgMTMuNDI5Njg4LTMwIDMwLTMwIDMwIDEzLjQyOTY4OCAzMCAzMHptMCAwIiBmaWxsPSIjZmZmMzVjIi8+PHBhdGggZD0ibTcwIDM5MHYxMTJoLTYwdi03MmMwLTIyLjA4OTg0NCAxNy45MTAxNTYtNDAgNDAtNDB6bTAgMCIgZmlsbD0iIzY3NmU3NCIvPjxwYXRoIGQ9Im0xMCA1MTJoNDAwYzUuNTIzNDM4IDAgMTAtNC40NzY1NjIgMTAtMTB2LTcyYzAtMjcuNTcwMzEyLTIyLjQyOTY4OC01MC01MC01MGgtMTEuMDA3ODEyYy00LjY0NDUzMi0yMi43OTY4NzUtMjQuODQzNzUtNDAtNDguOTkyMTg4LTQwaC0zMHYtMjBoMzAuMDUwNzgxYzI3LjU3MDMxMyAwIDQ5Ljk0OTIxOS0yMi40Mjk2ODggNDkuOTQ5MjE5LTUwdi0xNDBjMC0yNy41NzAzMTItMjIuMzc4OTA2LTUwLTQ5Ljk0OTIxOS01MGgtMzAuMDUwNzgxdi0xMGMwLTE2LjU0Mjk2OS0xMy40NTcwMzEtMzAtMzAtMzBoLTMwdi0zMGMwLTUuNTIzNDM4LTQuNDc2NTYyLTEwLTEwLTEwcy0xMCA0LjQ3NjU2Mi0xMCAxMHYzMGgtMzBjLTE2LjU0Mjk2OSAwLTMwIDEzLjQ1NzAzMS0zMCAzMHYxMGgtMzAuMDUwNzgxYy0yNy41NzAzMTMgMC00OS45NDkyMTkgMjIuNDI5Njg4LTQ5Ljk0OTIxOSA1MHY2MGMwIDUuNTIzNDM4IDQuNDI1NzgxIDEwIDkuOTQ5MjE5IDEwIDUuNTIzNDM3IDAgMTAtNC40NzY1NjIgMTAtMTB2LTIwaDIxLjMxNjQwNmM0LjQ1MzEyNSAxNy4yMzQzNzUgMjAuMTI4OTA2IDMwIDM4LjczNDM3NSAzMCAyMi4wNTQ2ODggMCA0MC0xNy45NDUzMTIgNDAtNDBzLTE3Ljk0NTMxMi00MC00MC00MGMtMTguNjA1NDY5IDAtMzQuMjgxMjUgMTIuNzY1NjI1LTM4LjczNDM3NSAzMGgtMjEuMzE2NDA2di0yMGMwLTE2LjU0Mjk2OSAxMy40NTcwMzEtMzAgMzAtMzBoMjAwLjEwMTU2MmMxNi41NDI5NjkgMCAzMCAxMy40NTcwMzEgMzAgMzB2MjBoLTIxLjMxNjQwNmMtNC40NTMxMjUtMTcuMjM0Mzc1LTIwLjEyODkwNi0zMC0zOC43MzQzNzUtMzAtMjIuMDU0Njg4IDAtNDAgMTcuOTQ1MzEyLTQwIDQwczE3Ljk0NTMxMiA0MCA0MCA0MGMxOC42MDU0NjkgMCAzNC4yODEyNS0xMi43NjU2MjUgMzguNzM0Mzc1LTMwaDIxLjMxNjQwNnYxMDBjMCAxNi41NDI5NjktMTMuNDU3MDMxIDMwLTMwIDMwaC0xMC4wNTA3ODF2LTUwYzAtMTYuNTQyOTY5LTEzLjQ1NzAzMS0zMC0zMC0zMGgtMTIwYy0xNi41NDI5NjkgMC0zMCAxMy40NTcwMzEtMzAgMzB2NTBoLTEwLjA1MDc4MWMtMTYuNTQyOTY5IDAtMzAtMTMuNDU3MDMxLTMwLTMwIDAtNS41MjM0MzgtNC40NzY1NjMtMTAtMTAtMTAtNS41MjM0MzggMC0xMCA0LjQ3NjU2Mi0xMCAxMCAwIDI3LjU3MDMxMiAyMi40Mjk2ODcgNTAgNTAgNTBoMzAuMDUwNzgxdjIwaC0zMGMtMjQuMTQ0NTMxIDAtNDQuMzQ3NjU2IDE3LjIwMzEyNS00OC45OTIxODggNDBoLTExLjAwNzgxMmMtMjcuNTcwMzEyIDAtNTAgMjIuNDI5Njg4LTUwIDUwdjcyYzAgNS41MjM0MzggNC40NzY1NjIgMTAgMTAgMTB6bTEzMC0zNzJjMTEuMDI3MzQ0IDAgMjAgOC45NzI2NTYgMjAgMjBzLTguOTcyNjU2IDIwLTIwIDIwLTIwLTguOTcyNjU2LTIwLTIwIDguOTcyNjU2LTIwIDIwLTIwem0yMC03MGMwLTUuNTE1NjI1IDQuNDg0Mzc1LTEwIDEwLTEwaDgwYzUuNTE1NjI1IDAgMTAgNC40ODQzNzUgMTAgMTB2MTBoLTEwMHptMTIwIDExMGMtMTEuMDI3MzQ0IDAtMjAtOC45NzI2NTYtMjAtMjBzOC45NzI2NTYtMjAgMjAtMjAgMjAgOC45NzI2NTYgMjAgMjAtOC45NzI2NTYgMjAtMjAgMjB6bS0yMCAzMTJoLTEwMHYtNDJjMC01LjUxNTYyNSA0LjQ4NDM3NS0xMCAxMC0xMGg4MGM1LjUxNTYyNSAwIDEwIDQuNDg0Mzc1IDEwIDEwem0xNDAtNjJ2NjJoLTQwdi05MmgxMGMxNi41NDI5NjkgMCAzMCAxMy40NTcwMzEgMzAgMzB6bS0yNTAtMTkwaDEyMGM1LjUxNTYyNSAwIDEwIDQuNDg0Mzc1IDEwIDEwdjEwaC0xNDB2LTEwYzAtNS41MTU2MjUgNC40ODQzNzUtMTAgMTAtMTB6bS0xMCA0MGgxNDB2MjBoLTE0MHptMjAgNDBoMTAwdjIwaC0xMDB6bS01MCA0MGgyMDBjMTYuNTQyOTY5IDAgMzAgMTMuNDU3MDMxIDMwIDMwdjEwMmgtNjB2LTQyYzAtMTYuNTQyOTY5LTEzLjQ1NzAzMS0zMC0zMC0zMGgtODBjLTE2LjU0Mjk2OSAwLTMwIDEzLjQ1NzAzMS0zMCAzMHY0MmgtNjB2LTEwMmMwLTE2LjU0Mjk2OSAxMy40NTcwMzEtMzAgMzAtMzB6bS02MCA0MGgxMHY5MmgtNDB2LTYyYzAtMTYuNTQyOTY5IDEzLjQ1NzAzMS0zMCAzMC0zMHptMCAwIi8+PHBhdGggZD0ibTgwIDIzMGMwIDUuNTIzNDM4LTQuNDc2NTYyIDEwLTEwIDEwcy0xMC00LjQ3NjU2Mi0xMC0xMCA0LjQ3NjU2Mi0xMCAxMC0xMCAxMCA0LjQ3NjU2MiAxMCAxMHptMCAwIi8+PC9zdmc+Cg==";
 
 const LOW = 0;
 const HIGH = 1;
 const MAX_SALIDAS = 4; 
 const MAX_ENTRADAS = 4; 
+const MAX_DIGITALES = 4; 
 const MAX_SERVOS = 2; 
+const MAX_SALIDAS_DIGITALES = 2; 
 const THRESHOLD_HIGH = 768;
 const THRESHOLD_LOW = 256;
 
@@ -152,15 +154,17 @@ var   SERVO = class {
   }
 
  var  ANALOG = class {
-    /**
-   * class Analog
-   * @constructor
-   *
-   * @param index {Integer} analog number
+     /**
+      * class Analog
+      * @constructor
+      *
+      * @param index {Integer} analog number
    * 
    */
-    constructor(index) {
+  constructor(index) {
       this.index = index;
+      this.status = 0;
+      this.type = "analog";
       this.callback = function () { };
       var me = this;
       socket.on('ANALOG_MESSAGE', function (data) {
@@ -174,29 +178,33 @@ var   SERVO = class {
    * @param callback {Function} callback function
    */    
     on(callback) {
-      socket.emit('ANALOG', { index: this.index, method: 'on' });
-      if (typeof callback == "function")
-      this.callback = callback;
+        this.status = 1;
+        socket.emit('ANALOG', { index: this.index, method: 'on' });
+        if (typeof callback == "function")
+        this.callback = callback;
     }
     /**
-   * Off(): Turns reporting off
-   *
-   */       
+     * Off(): Turns reporting off
+     *
+     */       
     off() { 
+        this.status = 0;
       socket.emit('ANALOG', { index: this.index, method: 'off' });
     }
   }
-
-var  DIGITAL = class {
+  
+  var  DIGITAL = class {
     /**
-   * class Digital
+     * class Digital
    * @constructor
    *
    * @param index {Integer} digital number
    * 
    */
-    constructor(index) {
+  constructor(index) {
       this.index = index;
+      this.type = "digital";
+      this.status = 0;
       this.callback = function () { };
       var me = this;
       socket.on('DIGITAL_MESSAGE', function (data) {
@@ -210,6 +218,7 @@ var  DIGITAL = class {
    * @param callback {Function} callback function
    */    
     on(callback) {
+        this.status = 1;
       socket.emit('DIGITAL', { index: this.index, method: 'on' });
       if (typeof callback == "function")
       this.callback = callback;
@@ -219,6 +228,7 @@ var  DIGITAL = class {
    *
    */       
     off() { 
+        this.status = 0;
       socket.emit('DIGITAL', { index: this.index, method: 'off' });
     }
     /**
@@ -382,6 +392,100 @@ var   LCD = class {
     }
   }
 
+  var  PING = class {
+    /**
+     * class Ping
+     * @constructor
+     *
+     * @param index {Integer} analog number
+  * 
+  */
+ constructor(index) {
+     this.index = index;
+     this.status = 0;
+     this.type = "ping";
+     this.cm = 0;
+     this.inches = 0;
+     this.callback = function () { };
+     var me = this;
+     socket.on('PING_MESSAGE', function (data) {
+       if(data.index == me.index)
+        me.cm = data.cm;
+        me.inches = data.inches;
+         me.callback(data);
+     });      
+   }
+   /**
+  * On(): Turns reporting on
+  *
+  * @param callback {Function} callback function
+  */    
+   on(callback) {
+       this.status = 1;
+       socket.emit('PING', { index: this.index, method: 'on' });
+       if (typeof callback == "function")
+       this.callback = callback;
+   }
+   /**
+    * Off(): Turns reporting off
+    *
+    */       
+   off() { 
+       this.status = 0;
+     socket.emit('PING', { index: this.index, method: 'off' });
+   }
+ }
+
+  var   PIXEL = class {
+    /**
+   * class Pixel
+   * @constructor
+   *
+   * @param index {Integer} motor number
+   * 
+   */
+  constructor(index) {
+    this.index = index;
+    this.type = "pixel";
+  }
+    /**
+   * create(length): Create strip
+   *
+   */
+  create(length) {
+      socket.emit('PIXEL', {index: this.index, method: 'create', param: length, param2: false, param3: false });
+    }
+    /**
+   * encender(): Turns on
+   *
+   */
+  encender(n) {
+    socket.emit('PIXEL', {index: this.index, method: 'on', param: n, param2: false, param3: false  });
+  }
+  /**
+     * apagar(): Turns off
+     *
+     */
+    apagar(n) {
+        socket.emit('PIXEL', {index: this.index, method: 'off', param: n, param2: false, param3: false  }); 
+    }
+    /**
+   * color(): Change color to strip or pixel 
+   *
+   */
+  color(color, i) {
+      socket.emit('PIXEL', {index: this.index, method: 'color', param: color, param2: i, param3: false });
+    }
+    /**
+   * shift(): Shift amount of pixels
+   *
+   */
+  shift(offset, direction, wrap) {
+      socket.emit('PIXEL', {index: this.index, method: 'shift', param: offset, param2: direction, param3: wrap });
+    }
+  }
+
+
 class Scratch3Interfaz {
     constructor (runtime) {
         this.runtime = runtime;
@@ -391,19 +495,30 @@ class Scratch3Interfaz {
             lcd: new LCD,
             salidas: [new OUTPUT(1),new OUTPUT(2),new OUTPUT(3),new OUTPUT(4)],
             entradas: [new ANALOG(1),new ANALOG(2),new ANALOG(3),new ANALOG(4)],
+            digitales: [new DIGITAL(1),new DIGITAL(2),new DIGITAL(3),new DIGITAL(4)],
             servos: [new SERVO(1),new SERVO(2)],
+            pixels: [], 
+            pings: [], 
             analogValues: [0,0,0,0],
+            digitalValues: [0,0,0,0],
             analogThreshold: [512,512,512,512],
             analogHIGH: [false, false, false, false],
             analogLOW: [false, false, false, false],
             entradaActiva: 0
         }
+        var me = this;
+        socket.on('DISCONNECTED_MESSAGE', function (data) {
+            me.interfaz.entradas = [new ANALOG(1),new ANALOG(2),new ANALOG(3),new ANALOG(4)];
+        });        
+        socket.on('INTERFAZ_CONNECTED', function (data) {
+            me.interfaz.entradas = [new ANALOG(1),new ANALOG(2),new ANALOG(3),new ANALOG(4)];
+        });        
     }
 
     getInfo () {
         return {
             id: 'interfaz',
-            name: 'Robótica',
+            name: 'Interfaz Robótica',
             blockIconURI: blockIconURI,
            // showStatusButton: true,
             blocks: [
@@ -496,6 +611,8 @@ class Scratch3Interfaz {
                         }                    
                     } 
                 },'---',
+/*
+
                 {
                     opcode: 'ledAccion',
                     blockType: BlockType.COMMAND,
@@ -542,7 +659,7 @@ class Scratch3Interfaz {
                         }                    
                     } 
                 },'---',
-
+*/
                 {
                     opcode: 'servoPosicion',
                     blockType: BlockType.COMMAND,
@@ -564,32 +681,48 @@ class Scratch3Interfaz {
                     } 
                 },'---',
                 {
-                    opcode: 'entradas',
-                    blockType: BlockType.COMMAND,
+                    opcode: 'entradaValor1',
+                    blockType: BlockType.REPORTER,
                     text: formatMessage({
-                        id: 'interfaz.entradasAccion',
-                        default: 'entrada [ENTRADAS_PARAM] [ENTRADAS_OP_PARAM]',
-                        description: 'Enciende/apaga el reporte de entradas'
-                    }),
-                    arguments: {
-                        ENTRADAS_PARAM: {
-                            type: ArgumentType.STRING,
-                            menu: 'entradas',
-                            defaultValue: '1' 
-                        },                    
-                        ENTRADAS_OP_PARAM: {
-                            type: ArgumentType.STRING,
-                            menu: 'entradas_op',
-                            defaultValue: 'encender' 
-                        }                    
-                    } 
+                        id: 'interfaz.entradaValor1',
+                        default: 'entrada 1',
+                        description: 'Reporta el valor de la entrada 1'
+                    })
                 },
+                {
+                    opcode: 'entradaValor2',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'interfaz.entradaValor2',
+                        default: 'entrada 2',
+                        description: 'Reporta el valor de la entrada 2'
+                    })
+                },
+                {
+                    opcode: 'entradaValor3',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'interfaz.entradaValor3',
+                        default: 'entrada 3',
+                        description: 'Reporta el valor de la entrada 3'
+                    })
+                },
+                {
+                    opcode: 'entradaValor4',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'interfaz.entradaValor4',
+                        default: 'entrada 4',
+                        description: 'Reporta el valor de la entrada 4'
+                    })
+                },
+                /*
                 {
                     opcode: 'entradaValor',
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
                         id: 'interfaz.entradaValor',
-                        default: 'entrada [ENTRADAS_PARAM] valor',
+                        default: 'entrada [ENTRADAS_PARAM]',
                         description: 'Reporta el valor de la entrada'
                     }),
                     arguments: {
@@ -600,6 +733,7 @@ class Scratch3Interfaz {
                         }                    
                     } 
                 },
+                */
                 {
                     opcode: 'entradaEstado',
                     blockType: BlockType.BOOLEAN,
@@ -697,7 +831,217 @@ class Scratch3Interfaz {
                             defaultValue: 'alto' 
                         }                    
                     }
-                },'---',
+                },
+                {
+                    opcode: 'entradas',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'interfaz.entradasAccion',
+                        default: 'entrada [ENTRADAS_PARAM] [ENTRADAS_OP_PARAM]',
+                        description: 'Enciende/apaga el reporte de entradas'
+                    }),
+                    arguments: {
+                        ENTRADAS_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas',
+                            defaultValue: '1' 
+                        },                    
+                        ENTRADAS_OP_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas_op',
+                            defaultValue: 'encender' 
+                        }                    
+                    } 
+                },
+                {
+                    opcode: 'entradasTipo',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'interfaz.entradasTipo',
+                        default: 'entradas [ENTRADAS_TIPO_PARAM]',
+                        description: 'Define el tipo de entradas [analogicas/digitales]'
+                    }),
+                    arguments: {
+                        ENTRADAS_TIPO_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas_tipo',
+                            defaultValue: 'analog' 
+                        }                    
+                    } 
+                },
+                '---',
+                {
+                    opcode: 'ultrasonido',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'interfaz.ultrasonidoAccion',
+                        default: 'ultrasonido [ENTRADAS_PARAM] [ENTRADAS_OP_PARAM]',
+                        description: 'Enciende/apaga el reporte de sensor de ultrasonido'
+                    }),
+                    arguments: {
+                        ENTRADAS_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas',
+                            defaultValue: '1' 
+                        },                    
+                        ENTRADAS_OP_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas_op',
+                            defaultValue: 'encender' 
+                        }                    
+                    } 
+                },   
+                {
+                    opcode: 'ultrasonidoValor',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'interfaz.ultrasonidoValor',
+                        default: 'ultrasonido [ENTRADAS_PARAM] cm',
+                        description: 'Reporta el valor del sensor de ultrasonido'
+                    }),
+                    arguments: {
+                        ENTRADAS_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas',
+                            defaultValue: '1' 
+                        }                    
+                    } 
+                },   
+                {
+                    opcode: 'cuandoUltrasonidoValor',
+                    text: formatMessage({
+                        id: 'interfaz.cuandoUltrasonidoValor',
+                        default: 'cuando ultrasonido [ENTRADAS_PARAM] [ENTRADA_OPERADOR] [ENTRADA_VALOR] cm',
+                        description: 'Cuando el valor del sensor de ultrasonido es  [mayor-menor-igual] que el [valor] en cm'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        ENTRADAS_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas',
+                            defaultValue: '1' 
+                        },                    
+                        ENTRADA_OPERADOR: {
+                            type: ArgumentType.NUMBER,
+                            menu: 'operadores',
+                            defaultValue: '<'
+                        },                    
+                        ENTRADA_VALOR: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 10
+                        }                    
+                    }
+                },
+                '---',
+                {
+                    opcode: 'pixelCreate',
+                    text: formatMessage({
+                        id: 'interfaz.pixelCreate',
+                        default: 'Pixel Led [SALIDA_DIGITAL] [CANTIDAD] leds',
+                        description: 'Crea una tira de pixel leds'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        SALIDA_DIGITAL: {
+                            type: ArgumentType.STRING,
+                            menu: 'salidas_digitales',
+                            defaultValue: '1' 
+                        },
+                        CANTIDAD: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }                    
+                    }
+                },
+                {
+                    opcode: 'pixelAccion',
+                    text: formatMessage({
+                        id: 'interfaz.pixelAccion',
+                        default: 'Pixel Led [SALIDA_DIGITAL] [SALIDA_DIGITAL_OP]',
+                        description: '[Enciende/apaga] una tira de pixel leds'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        SALIDA_DIGITAL: {
+                            type: ArgumentType.STRING,
+                            menu: 'salidas_digitales',
+                            defaultValue: '1' 
+                        },
+                        SALIDA_DIGITAL_OP: {
+                            type: ArgumentType.STRING,
+                            menu: 'salidas_digitales_op',
+                            defaultValue: 'encender' 
+                        }                    
+                    }
+                },
+                {
+                    opcode: 'pixelAccionPos',
+                    text: formatMessage({
+                        id: 'interfaz.pixelAccionPos',
+                        default: 'Pixel Led [SALIDA_DIGITAL] [SALIDA_DIGITAL_OP] led [POSICION] ',
+                        description: '[Enciende/Apaga] un pixel led'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        SALIDA_DIGITAL: {
+                            type: ArgumentType.STRING,
+                            menu: 'salidas_digitales',
+                            defaultValue: '1' 
+                        },
+                        POSICION: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        },
+                        SALIDA_DIGITAL_OP: {
+                            type: ArgumentType.STRING,
+                            menu: 'salidas_digitales_op',
+                            defaultValue: 'encender' 
+                        }                    
+                    }
+                },
+                {
+                    opcode: 'pixelColor',
+                    text: formatMessage({
+                        id: 'interfaz.pixelColor',
+                        default: 'Pixel Led [SALIDA_DIGITAL] todos [COLOR] ',
+                        description: 'Crea una tira de pixel leds'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        SALIDA_DIGITAL: {
+                            type: ArgumentType.STRING,
+                            menu: 'salidas_digitales',
+                            defaultValue: '1' 
+                        },
+                        COLOR: {
+                            type: ArgumentType.COLOR
+                        }                    
+                    }
+                },
+                {
+                    opcode: 'pixelColorPos',
+                    text: formatMessage({
+                        id: 'interfaz.pixelColorPos',
+                        default: 'Pixel Led [SALIDA_DIGITAL] led [POSICION] [COLOR] ',
+                        description: 'Crea una tira de pixel leds'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        SALIDA_DIGITAL: {
+                            type: ArgumentType.STRING,
+                            menu: 'salidas_digitales',
+                            defaultValue: '1' 
+                        },
+                        POSICION: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        },
+                        COLOR: {
+                            type: ArgumentType.COLOR
+                        }                    
+                    }
+                },
+                '---',
                 {
                     opcode: 'lcdAccion',
                     text: formatMessage({
@@ -714,15 +1058,23 @@ class Scratch3Interfaz {
                         }                    
                     }
                 }
-
             ],
             menus: {
                 salidas: ['1','2','3','4'],
-                salidas_op: ['encender', 'apagar', 'invertir', 'frenar'],
+                salidas_digitales: ['1','2'],
+                salidas_op: ['encender', 'apagar', 'invertir'],
+                salidas_digitales_op: ['encender', 'apagar'],
                 leds_op: ['encender A', 'encender B', 'apagar', 'cambiar'],
                 leds_op_time: ['encender A', 'encender B'],
                 entradas: ['1','2','3','4'],
-                entradas_op: ['encender', 'apagar'],
+                entradas_op: [
+                    {value: 'encender', text: 'reportar'},
+                    {value:'apagar', text:'apagar'}
+                ],
+                entradas_tipo: [
+                    {value: 'analog', text: 'analógicas'},
+                    {value:'digital', text:'digitales'}
+                ],
                 servos: ['1','2'],
                 direccion: ['a','b'],
                 estados: ['alto','bajo'],
@@ -814,42 +1166,118 @@ class Scratch3Interfaz {
 
     };
 
+    entradasTipo (args, util) {
+        var j = this.interfaz;
+        switch(args.ENTRADAS_TIPO_PARAM) {
+            case 'analog': case 1: 
+                for(i=0;i<MAX_ENTRADAS;i++) {
+                    j.entradas[i].off();
+                    j.entradas[i]  = new ANALOG(i+1);
+                }
+            break;
+            case 'digital': case 2: 
+                for(i=0;i<MAX_ENTRADAS;i++) {
+                    j.entradas[i].off();
+                    j.entradas[i]  = new DIGITAL(i+1);
+                }
+        break;
+        }
+
+    }
+
     entradas (args, util) {
         if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
         var i = this.interfaz;
         i.entradaActiva = args.ENTRADAS_PARAM;
-        var s = i.entradas[args.ENTRADAS_PARAM - 1];
         switch(args.ENTRADAS_OP_PARAM) {
-            case 'encender': case 1: s.on(function(data){
-                i.analogValues[data.index -1 ] = data.value;
-                i.analogHIGH[data.index -1] = data.value > THRESHOLD_HIGH;
-                i.analogLOW[data.index -1] = data.value < THRESHOLD_LOW;
-            }); break;
+            case 'encender': case 1: 
+                var s = i.entradas[args.ENTRADAS_PARAM - 1];
+                if(s.status) return;
+                if(s.type == "digital") {
+                    s.on(function(data){
+                        i.digitalValues[data.index -1 ] = data.value;
+                    }); 
+               } else {
+                   s.on(function(data){
+                       i.analogValues[data.index -1 ] = data.value;
+                       i.analogHIGH[data.index -1] = data.value > THRESHOLD_HIGH;
+                       i.analogLOW[data.index -1] = data.value < THRESHOLD_LOW;
+                   }); 
+               }
+            break;
             case 'apagar': case 2: 
+                var s = i.entradas[args.ENTRADAS_PARAM - 1];
                 s.off(); 
-                i.analogValues[args.ENTRADAS_OP_PARAM -1 ] = 0;
-                i.analogHIGH[args.ENTRADAS_OP_PARAM -1] = false;
-                i.analogLOW[args.ENTRADAS_OP_PARAM -1] = false;
+                if(s.type == "analog") {
+                    i.analogValues[args.ENTRADAS_PARAM -1 ] = 0;
+                    i.analogHIGH[args.ENTRADAS_PARAM -1] = false;
+                    i.analogLOW[args.ENTRADAS_PARAM -1] = false;
+                }
+                if(s.type == "digital") {
+                    i.digitalValues[args.ENTRADAS_PARAM -1 ] = 0;
+                }
                 break;
             default: s.off();
         }
     };
+
+
+    checkEntradaStatus(index, util) {
+            this.entradas({'ENTRADAS_PARAM': index, 'ENTRADAS_OP_PARAM': 1}, util);
+    }
     
     entradaValor (args, util) {
         if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
         var i = this.interfaz;
         i.entradaActiva = args.ENTRADAS_PARAM;
+        this.checkEntradaStatus(args.ENTRADAS_PARAM, util);
         return i.analogValues[args.ENTRADAS_PARAM - 1];
     }
+    
+    entradaValor1 (args, util) {
+        var i = this.interfaz;
+        var index = 0;
+        this.checkEntradaStatus(1, util);
+        var s = i.entradas[index];
+        return s.type == "analog" ? i.analogValues[index] : i.digitalValues[index];
+    }
+    entradaValor2 (args, util) {
+        var i = this.interfaz;
+        var index = 1;
+        this.checkEntradaStatus(2, util);
+        var s = i.entradas[index];
+        return s.type == "analog" ? i.analogValues[index] : i.digitalValues[index];
+    }
+    entradaValor3 (args, util) {
+        var i = this.interfaz;
+        var index = 2;
+        this.checkEntradaStatus(3, util);
+        var s = i.entradas[index];
+        return s.type == "analog" ? i.analogValues[index] : i.digitalValues[index];
+    }
+    entradaValor4 (args, util) {
+        var i = this.interfaz;
+        var index = 3;
+        this.checkEntradaStatus(4, util);
+        var s = i.entradas[index];
+        return s.type == "analog" ? i.analogValues[index] : i.digitalValues[index];
+    }
+
 
     entradaEstado (args, util) {
         if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
         var i = this.interfaz;
         i.entradaActiva = args.ENTRADAS_PARAM;
+        var s = i.entradas[args.ENTRADAS_PARAM - 1];
         var v = false;
+        this.checkEntradaStatus(args.ENTRADAS_PARAM, util);
         switch(args.ENTRADA_ESTADO) {
-            case 'alto': case 1:  v =  i.analogHIGH[args.ENTRADAS_PARAM - 1] ; break;
-            case 'bajo': case 0:  v =  i.analogLOW[args.ENTRADAS_PARAM - 1] ; break;
+            case 'alto': case 1:  
+                v = (s.type == "analog")  ? i.analogHIGH[args.ENTRADAS_PARAM - 1]  : i.digitalValues[args.ENTRADAS_PARAM - 1] == 1;
+            break;
+            case 'bajo': case 0:  
+                v = (s.type == "analog")  ? i.analogLOW[args.ENTRADAS_PARAM - 1]  : i.digitalValues[args.ENTRADAS_PARAM - 1] == 0;
+            break;
         }
         return v;
     }
@@ -857,10 +1285,16 @@ class Scratch3Interfaz {
     cuandoEntradaEstado (args, util) {
         if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
         var i = this.interfaz;
+        var s = i.entradas[args.ENTRADAS_PARAM - 1];
         var v = false;
+        this.checkEntradaStatus(args.ENTRADAS_PARAM, util);
         switch(args.ENTRADA_ESTADO) {
-            case 'alto': case 1:  v =  i.analogHIGH[args.ENTRADAS_PARAM - 1]  ; break;
-            case 'bajo': case 0:  v =  i.analogLOW[args.ENTRADAS_PARAM - 1] ; break;
+            case 'alto': case 1:  
+                v = (s.type == "analog")  ? i.analogHIGH[args.ENTRADAS_PARAM - 1]  : i.digitalValues[args.ENTRADAS_PARAM - 1] == 1;
+            break;
+            case 'bajo': case 0:  
+                v = (s.type == "analog")  ? i.analogLOW[args.ENTRADAS_PARAM - 1]  : i.digitalValues[args.ENTRADAS_PARAM - 1] == 0;
+            break;
         }
         return v;
     }
@@ -868,7 +1302,10 @@ class Scratch3Interfaz {
     cuandoEntradaValor (args, util) {
         if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
         var i = this.interfaz;
+        var s = i.entradas[args.ENTRADAS_PARAM - 1];
         var v = false;
+        if(s.type == "digital") return false;
+        this.checkEntradaStatus(args.ENTRADAS_PARAM, util);
         switch(args.ENTRADA_OPERADOR) {
             case '>':   v =  i.analogValues[args.ENTRADAS_PARAM - 1] > Cast.toNumber(args.ENTRADA_VALOR) ; break;
             case '<':   v =  i.analogValues[args.ENTRADAS_PARAM - 1] < Cast.toNumber(args.ENTRADA_VALOR) ; break;
@@ -896,7 +1333,7 @@ class Scratch3Interfaz {
         console.log(args.SERVOS_POSICION);
         s.position( MathUtil.clamp(Math.abs(args.SERVOS_POSICION),0,180));
     };
-
+    
     lcdAccion (args, util) {
         switch(args.LCD_OP) {
             case 'encender': case 1:  this.interfaz.lcd.encender(); break;
@@ -905,6 +1342,90 @@ class Scratch3Interfaz {
             default: s.off();
         }
     };
+    
+
+    ultrasonido (args, util) {
+        if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
+        var i = this.interfaz;
+        var index = args.ENTRADAS_PARAM - 1;
+        switch(args.ENTRADAS_OP_PARAM) {
+            case 'encender': case 1: 
+                i.pings[index] = new PING(index);
+                i.pings[index].on();
+            break;
+            case 'apagar': case 2: 
+                if(typeof i.pings[index] != "undefined")
+                    i.pings[index].off();
+            break;
+        }
+    }
+
+    ultrasonidoValor (args, util) {
+        if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
+        var i = this.interfaz;
+        var index = args.ENTRADAS_PARAM - 1;
+        console.log(i.pings[index]);
+        if(typeof i.pings[index] != "undefined")
+            return i.pings[index].cm;
+    }
+
+    cuandoUltrasonidoValor (args, util) {
+        if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
+        var i = this.interfaz;
+        var s = i.pings[args.ENTRADAS_PARAM - 1];
+        var v = false;
+        switch(args.ENTRADA_OPERADOR) {
+            case '>':   v =  s.cm > Cast.toNumber(args.ENTRADA_VALOR) ; break;
+            case '<':   v =  s.cm < Cast.toNumber(args.ENTRADA_VALOR) ; break;
+            case '=':   v =  s.cm = Cast.toNumber(args.ENTRADA_VALOR) ; break;
+        }
+        return v;
+    }
+
+    pixelCreate(args, util) {
+        if(args.SALIDAS_DIGITALES > MAX_SALIDAS_DIGITALES) return;
+        var i = this.interfaz;
+        var index = args.SALIDAS_DIGITALES - 1;
+        i.pixels[index] = new PIXEL(index);
+        var length = args.CANTIDAD < 1 ? 1 : args.CANTIDAD;
+        i.pixels[index].create(length);
+    }
+
+    pixelColor(args, util) {
+        if(args.SALIDAS_DIGITALES > MAX_SALIDAS_DIGITALES) return;
+        var i = this.interfaz;
+        var index = args.SALIDAS_DIGITALES - 1;
+        if(typeof i.pixels[index] != "undefined" && i.pixels[index].type == "pixel") {
+            var n = (args.POSICION) ? args.POSICION : false;
+            i.pixels[index].color(args.COLOR, n);
+        }
+    }
+    
+    pixelColorPos(args, util) {
+        this.pixelColor(args, util);
+    }
+    
+    pixelAccion(args, util) {
+        if(args.SALIDAS_DIGITALES > MAX_SALIDAS_DIGITALES) return;
+        var i = this.interfaz;
+        var index = args.SALIDAS_DIGITALES - 1;
+        if(typeof i.pixels[index] != "undefined" && i.pixels[index].type == "pixel") {
+            var n = (args.POSICION) ? args.POSICION : false;
+            switch(args.SALIDA_DIGITAL_OP) {
+                case 'encender': case 1: 
+                    i.pixels[index].encender(n);
+                break
+                case 'apagar': case 2: 
+                    i.pixels[index].apagar(n);
+                break
+            }
+        }
+    }
+
+    pixelAccionPos(args, util) {
+        this.pixelAccion(args, util);
+    }
+    
 }
 
 module.exports = Scratch3Interfaz;
