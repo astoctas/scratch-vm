@@ -33,6 +33,7 @@
     "arraybuffer-loader": "^1.0.6",
     "atob": "2.1.2",
     "btoa": "1.2.1",
+    "bufferutil": "^4.0.1",
     "canvas-toBlob": "1.0.0",
     "decode-html": "2.0.0",
     "diff-match-patch": "1.0.4",
@@ -48,7 +49,9 @@
     "scratch-translate-extension-languages": "0.0.20190416132834",
     "socket.io-client": "2.0.4",
     "text-encoding": "0.7.0",
-    "worker-loader": "^1.1.1"
+    "utf-8-validate": "^5.0.2",
+    "worker-loader": "^1.1.1",
+    "ws": "^7.3.1"
   },
   "devDependencies": {
     "@babel/core": "^7.1.2",
