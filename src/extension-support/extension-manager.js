@@ -24,6 +24,7 @@ const builtinExtensions = {
     makeymakey: () => require('../extensions/scratch3_makeymakey'),
     boost: () => require('../extensions/scratch3_boost'),
     gdxfor: () => require('../extensions/scratch3_gdx_for'),
+    socket: () => require('../extensions/scratch3_socket'),
     interfaz: () => require('../extensions/scratch3_interfaz'),
     rasti: () => require('../extensions/scratch3_rasti'),
     i2c: () => require('../extensions/scratch3_i2c')
