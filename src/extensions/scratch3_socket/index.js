@@ -55,7 +55,7 @@ class Scratch3Socket {
     getInfo () {
         return {
             id: 'socket',
-            name: 'Websocket',
+            name: 'Python',
             blockIconURI: blockIconURI,
            // showStatusButton: true,
             blocks: [

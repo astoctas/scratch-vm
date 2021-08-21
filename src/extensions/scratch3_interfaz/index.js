@@ -22,8 +22,8 @@ const MAX_ENTRADAS = 4;
 const MAX_DIGITALES = 4; 
 const MAX_SERVOS = 2; 
 const MAX_SALIDAS_DIGITALES = 2; 
-const THRESHOLD_HIGH = 768;
-const THRESHOLD_LOW = 256;
+const THRESHOLD_HIGH = 75;
+const THRESHOLD_LOW = 25;
 
 var OUTPUT = class {
     /**
@@ -80,7 +80,7 @@ var OUTPUT = class {
    * 
    */
     power(pow) {
-      socket.emit('OUTPUT', { index: this.index, method: 'power', param: pow });
+        socket.emit('OUTPUT', { index: this.index, method: 'power', param: pow });
     }
   };
 
@@ -167,10 +167,6 @@ var   SERVO = class {
       this.type = "analog";
       this.callback = function () { };
       var me = this;
-      socket.on('ANALOG_MESSAGE', function (data) {
-        if(data.index == me.index)
-          me.callback(data);
-      });      
     }
     /**
    * On(): Turns reporting on
@@ -206,11 +202,7 @@ var   SERVO = class {
       this.type = "digital";
       this.status = 0;
       this.callback = function () { };
-      var me = this;
-      socket.on('DIGITAL_MESSAGE', function (data) {
-        if(data.index == me.index)
-          me.callback(data);
-      });      
+      var me = this;    
     }
     /**
    * On(): Turns reporting on
@@ -253,10 +245,6 @@ var   SERVO = class {
       this.address = address;
       this.callback = function () { };
       var me = this;
-      socket.on('I2C_MESSAGE', function (data) {
-        if (data.address == me.address)
-          me.callback(data);
-      });
     }
     /**
    * On(): Turns reporting on
@@ -407,13 +395,8 @@ var   LCD = class {
      this.cm = 0;
      this.inches = 0;
      this.callback = function () { };
-     var me = this;
-     socket.on('PING_MESSAGE', function (data) {
-       if(data.index == me.index)
-        me.cm = data.cm;
-        me.inches = data.inches;
-         me.callback(data);
-     });      
+     this.interval = 0;
+     var me = this; 
    }
    /**
   * On(): Turns reporting on
@@ -423,6 +406,7 @@ var   LCD = class {
    on(callback) {
        this.status = 1;
        socket.emit('PING', { index: this.index, method: 'on' });
+       this.interval = setInterval(function() {socket.emit("PING", {index:0, method: "ping"})},100)
        if (typeof callback == "function")
        this.callback = callback;
    }
@@ -432,7 +416,8 @@ var   LCD = class {
     */       
    off() { 
        this.status = 0;
-     socket.emit('PING', { index: this.index, method: 'off' });
+       clearInterval(this.interval);
+       //socket.emit('PING', { index: this.index, method: 'off' });
    }
  }
 
@@ -493,15 +478,16 @@ class Scratch3Interfaz {
 
         this.interfaz = {
             lcd: new LCD,
-            salidas: [new OUTPUT(1),new OUTPUT(2),new OUTPUT(3),new OUTPUT(4)],
-            entradas: [new ANALOG(1),new ANALOG(2),new ANALOG(3),new ANALOG(4)],
+            salidas: [new OUTPUT(0),new OUTPUT(1),new OUTPUT(2),new OUTPUT(3)],
+            entradas: [new ANALOG(0),new ANALOG(1),new ANALOG(2),new ANALOG(3)],
             digitales: [new DIGITAL(1),new DIGITAL(2),new DIGITAL(3),new DIGITAL(4)],
-            servos: [new SERVO(1),new SERVO(2)],
+            servos: [new SERVO(0),new SERVO(1)],
             pixels: [], 
-            pings: [], 
+            i2c: [],
+            pings: [new PING(0),new PING(1),new PING(2),new PING(3)], 
             analogValues: [0,0,0,0],
             digitalValues: [0,0,0,0],
-            analogThreshold: [512,512,512,512],
+            analogThreshold: [50,50,50,50],
             analogHIGH: [false, false, false, false],
             analogLOW: [false, false, false, false],
             entradaActiva: 0
@@ -512,7 +498,26 @@ class Scratch3Interfaz {
         });        
         socket.on('INTERFAZ_CONNECTED', function (data) {
             me.interfaz.entradas = [new ANALOG(1),new ANALOG(2),new ANALOG(3),new ANALOG(4)];
-        });        
+        });   
+        socket.on('ANALOG_MESSAGE', function (data) {
+            var a = me.interfaz.entradas[data.index];
+            a.callback(data);
+        });              
+        socket.on('DIGITAL_MESSAGE', function (data) {
+            var a = me.interfaz.digitales[data.index];
+            a.callback(data);
+        });           
+        socket.on('PING_MESSAGE', function (data) {
+            var a = me.interfaz.pings[data.index];
+            //a.cm = data.value;
+            a.callback(data);
+        });       
+        socket.on('I2C_MESSAGE', function (data) {
+            if(typeof me.interfaz.i2c[data.address] != undefined) {
+                var a = me.interaz.i2c[data.address];
+                a.callback(data);
+            }
+          }); 
     }
 
     getInfo () {
@@ -681,6 +686,73 @@ class Scratch3Interfaz {
                     } 
                 },'---',
                 {
+                    opcode: 'entradas',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'interfaz.entradasAccion',
+                        default: 'entrada [ENTRADAS_PARAM] [ENTRADAS_OP_PARAM]',
+                        description: 'Enciende/apaga el reporte de entradas'
+                    }),
+                    arguments: {
+                        ENTRADAS_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas',
+                            defaultValue: '1' 
+                        },                    
+                        ENTRADAS_OP_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas_op',
+                            defaultValue: 'encender' 
+                        }                    
+                    } 
+                },
+                {
+                    opcode: 'cuandoEntradaValor',
+                    text: formatMessage({
+                        id: 'interfaz.cuandoEntradaValor',
+                        default: 'cuando entrada [ENTRADAS_PARAM] [ENTRADA_OPERADOR] [ENTRADA_VALOR]',
+                        description: 'Cuando el valor de la entrada es  [mayor-menor-igual] que el [valor]'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        ENTRADAS_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas',
+                            defaultValue: '1' 
+                        },                    
+                        ENTRADA_OPERADOR: {
+                            type: ArgumentType.NUMBER,
+                            menu: 'operadores',
+                            defaultValue: '>'
+                        },                    
+                        ENTRADA_VALOR: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }                    
+                    }
+                },
+                {
+                    opcode: 'cuandoEntradaEstado',
+                    text: formatMessage({
+                        id: 'interfaz.cuandoEntradaEstado',
+                        default: 'cuando entrada [ENTRADAS_PARAM]  [ENTRADA_ESTADO]',
+                        description: 'Cuando la entrada esta en estado [alto-bajo]'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        ENTRADAS_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas',
+                            defaultValue: '1' 
+                        },                    
+                        ENTRADA_ESTADO: {
+                            type: ArgumentType.STRING,
+                            menu: 'estados',
+                            defaultValue: 'alto' 
+                        }                    
+                    }
+                },
+                {
                     opcode: 'entradaValor1',
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
@@ -786,73 +858,7 @@ class Scratch3Interfaz {
                     }),
                 },*/
                 '---',
-                {
-                    opcode: 'cuandoEntradaValor',
-                    text: formatMessage({
-                        id: 'interfaz.cuandoEntradaValor',
-                        default: 'cuando entrada [ENTRADAS_PARAM] [ENTRADA_OPERADOR] [ENTRADA_VALOR]',
-                        description: 'Cuando el valor de la entrada es  [mayor-menor-igual] que el [valor]'
-                    }),
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        ENTRADAS_PARAM: {
-                            type: ArgumentType.STRING,
-                            menu: 'entradas',
-                            defaultValue: '1' 
-                        },                    
-                        ENTRADA_OPERADOR: {
-                            type: ArgumentType.NUMBER,
-                            menu: 'operadores',
-                            defaultValue: '>'
-                        },                    
-                        ENTRADA_VALOR: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 512
-                        }                    
-                    }
-                },
-                {
-                    opcode: 'cuandoEntradaEstado',
-                    text: formatMessage({
-                        id: 'interfaz.cuandoEntradaEstado',
-                        default: 'cuando entrada [ENTRADAS_PARAM]  [ENTRADA_ESTADO]',
-                        description: 'Cuando la entrada esta en estado [alto-bajo]'
-                    }),
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        ENTRADAS_PARAM: {
-                            type: ArgumentType.STRING,
-                            menu: 'entradas',
-                            defaultValue: '1' 
-                        },                    
-                        ENTRADA_ESTADO: {
-                            type: ArgumentType.STRING,
-                            menu: 'estados',
-                            defaultValue: 'alto' 
-                        }                    
-                    }
-                },
-                {
-                    opcode: 'entradas',
-                    blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'interfaz.entradasAccion',
-                        default: 'entrada [ENTRADAS_PARAM] [ENTRADAS_OP_PARAM]',
-                        description: 'Enciende/apaga el reporte de entradas'
-                    }),
-                    arguments: {
-                        ENTRADAS_PARAM: {
-                            type: ArgumentType.STRING,
-                            menu: 'entradas',
-                            defaultValue: '1' 
-                        },                    
-                        ENTRADAS_OP_PARAM: {
-                            type: ArgumentType.STRING,
-                            menu: 'entradas_op',
-                            defaultValue: 'encender' 
-                        }                    
-                    } 
-                },
+                /*
                 {
                     opcode: 'entradasTipo',
                     blockType: BlockType.COMMAND,
@@ -869,6 +875,7 @@ class Scratch3Interfaz {
                         }                    
                     } 
                 },
+                */
                 '---',
                 {
                     opcode: 'ultrasonido',
@@ -1047,14 +1054,14 @@ class Scratch3Interfaz {
                     text: formatMessage({
                         id: 'interfaz.lcdAccion',
                         default: 'LCD [LCD_OP]',
-                        description: '[enciende/apaga/silencia] el display LCD incorporado'
+                        description: '[enciende/silencia] el display LCD incorporado'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         LCD_OP: {
                             type: ArgumentType.STRING,
                             menu: 'lcd_op',
-                            defaultValue: 'encender' 
+                            defaultValue: 'slienciar' 
                         }                    
                     }
                 }
@@ -1079,7 +1086,7 @@ class Scratch3Interfaz {
                 direccion: ['a','b'],
                 estados: ['alto','bajo'],
                 operadores: ['>','<', '='],
-                lcd_op: ['encender','apagar', 'silenciar'],
+                lcd_op: ['encender', 'silenciar'],
             }
         };
     }
@@ -1108,7 +1115,7 @@ class Scratch3Interfaz {
     salidasPotencia (args, util) {
         if(args.SALIDAS_PARAM > MAX_SALIDAS) return;
         var s = this.interfaz.salidas[args.SALIDAS_PARAM - 1];
-        var p = MathUtil.clamp(255*Cast.toNumber(args.SALIDAS_POT_PARAM)/100, 0, 255);
+        var p = Cast.toNumber(args.SALIDAS_POT_PARAM);
         s.power(p);        
     };
 
@@ -1135,8 +1142,8 @@ class Scratch3Interfaz {
         var s = this.interfaz.salidas[args.SALIDAS_PARAM - 1];
         s.power(128);
         switch(args.SALIDAS_LED_OP) {
-            case 'encender A': case 1: s.power(128); s.direction(0); s.on(); break;
-            case 'encender B': case 2: s.power(128); s.direction(1); s.on(); break;
+            case 'encender A': case 1: s.power(50); s.direction(0); s.on(); break;
+            case 'encender B': case 2: s.power(50); s.direction(1); s.on(); break;
             case 'apagar': case 3: s.off(); break;
             case 'cambiar': case 4: s.inverse(); break;
             default: s.off();
@@ -1154,10 +1161,10 @@ class Scratch3Interfaz {
         }
         
         return new Promise(resolve => {
-            s.power(128);
+            s.power(50);
             switch(args.SALIDAS_LED_OP_TIME) {
-                case 'encender A': case 1: s.power(128); s.direction(0); s.on(); break;
-                case 'encender B': case 2: s.power(128); s.direction(1); s.on(); break;
+                case 'encender A': case 1: s.power(50); s.direction(0); s.on(); break;
+                case 'encender B': case 2: s.power(50); s.direction(1); s.on(); break;
                 default: s.off();
             }
             setTimeout(() => s.off(), time);
@@ -1186,22 +1193,24 @@ class Scratch3Interfaz {
     }
 
     entradas (args, util) {
+        args.ENTRADAS_PARAM = parseInt(args.ENTRADAS_PARAM);
         if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
         var i = this.interfaz;
-        i.entradaActiva = args.ENTRADAS_PARAM;
+        i.entradaActiva = args.ENTRADAS_PARAM - 1;
         switch(args.ENTRADAS_OP_PARAM) {
             case 'encender': case 1: 
                 var s = i.entradas[args.ENTRADAS_PARAM - 1];
                 if(s.status) return;
                 if(s.type == "digital") {
                     s.on(function(data){
-                        i.digitalValues[data.index -1 ] = data.value;
+                        i.digitalValues[data.index] = data.value;
                     }); 
                } else {
                    s.on(function(data){
-                       i.analogValues[data.index -1 ] = data.value;
-                       i.analogHIGH[data.index -1] = data.value > THRESHOLD_HIGH;
-                       i.analogLOW[data.index -1] = data.value < THRESHOLD_LOW;
+                       data.value = Math.floor(data.value * 100 / 1023);
+                       i.analogValues[data.index] = data.value;
+                       i.analogHIGH[data.index] = data.value > THRESHOLD_HIGH;
+                       i.analogLOW[data.index] = data.value < THRESHOLD_LOW;
                    }); 
                }
             break;
@@ -1227,9 +1236,10 @@ class Scratch3Interfaz {
     }
     
     entradaValor (args, util) {
+        args.ENTRADAS_PARAM = parseInt(args.ENTRADAS_PARAM);
         if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
         var i = this.interfaz;
-        i.entradaActiva = args.ENTRADAS_PARAM;
+        i.entradaActiva = args.ENTRADAS_PARAM - 1;
         this.checkEntradaStatus(args.ENTRADAS_PARAM, util);
         return i.analogValues[args.ENTRADAS_PARAM - 1];
     }
@@ -1265,9 +1275,10 @@ class Scratch3Interfaz {
 
 
     entradaEstado (args, util) {
+        args.ENTRADAS_PARAM = parseInt(args.ENTRADAS_PARAM);
         if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
         var i = this.interfaz;
-        i.entradaActiva = args.ENTRADAS_PARAM;
+        i.entradaActiva = args.ENTRADAS_PARAM - 1;
         var s = i.entradas[args.ENTRADAS_PARAM - 1];
         var v = false;
         this.checkEntradaStatus(args.ENTRADAS_PARAM, util);
@@ -1324,7 +1335,7 @@ class Scratch3Interfaz {
     entradaUmbral (args, util) {
         if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
         var i = this.interfaz;
-         i.analogThreshold[args.ENTRADAS_PARAM - 1] = MathUtil.clamp(args.ENTRADA_UMBRAL,0,1023);
+         i.analogThreshold[args.ENTRADAS_PARAM - 1] = MathUtil.clamp(args.ENTRADA_UMBRAL,0,100);
     }
 
     servoPosicion (args, util) {
@@ -1339,7 +1350,6 @@ class Scratch3Interfaz {
             case 'encender': case 1:  this.interfaz.lcd.encender(); break;
             case 'apagar': case 3: this.interfaz.lcd.apagar(); break;
             case 'silenciar': case 4: this.interfaz.lcd.silenciar(); break;
-            default: s.off();
         }
     };
     
@@ -1350,8 +1360,10 @@ class Scratch3Interfaz {
         var index = args.ENTRADAS_PARAM - 1;
         switch(args.ENTRADAS_OP_PARAM) {
             case 'encender': case 1: 
-                i.pings[index] = new PING(index);
-                i.pings[index].on();
+                //i.pings[index] = new PING(index);
+                i.pings[index].on(function(data){
+                    i.pings[index].cm = data.value
+                });
             break;
             case 'apagar': case 2: 
                 if(typeof i.pings[index] != "undefined")
@@ -1364,7 +1376,6 @@ class Scratch3Interfaz {
         if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
         var i = this.interfaz;
         var index = args.ENTRADAS_PARAM - 1;
-        console.log(i.pings[index]);
         if(typeof i.pings[index] != "undefined")
             return i.pings[index].cm;
     }
@@ -1383,20 +1394,20 @@ class Scratch3Interfaz {
     }
 
     pixelCreate(args, util) {
-        if(args.SALIDAS_DIGITALES > MAX_SALIDAS_DIGITALES) return;
+        if(args.SALIDA_DIGITAL > MAX_SALIDAS_DIGITALES) return;
         var i = this.interfaz;
-        var index = args.SALIDAS_DIGITALES - 1;
+        var index = args.SALIDA_DIGITAL - 1;
         i.pixels[index] = new PIXEL(index);
-        var length = args.CANTIDAD < 1 ? 1 : args.CANTIDAD;
+        var length = args.CANTIDAD < 1 ? 1 : parseInt(args.CANTIDAD);
         i.pixels[index].create(length);
     }
 
     pixelColor(args, util) {
-        if(args.SALIDAS_DIGITALES > MAX_SALIDAS_DIGITALES) return;
+        if(args.SALIDA_DIGITAL > MAX_SALIDAS_DIGITALES) return;
         var i = this.interfaz;
-        var index = args.SALIDAS_DIGITALES - 1;
+        var index = args.SALIDA_DIGITAL - 1;
         if(typeof i.pixels[index] != "undefined" && i.pixels[index].type == "pixel") {
-            var n = (args.POSICION) ? args.POSICION : false;
+            var n = (args.POSICION) ? parseInt(args.POSICION) : false;
             i.pixels[index].color(args.COLOR, n);
         }
     }
@@ -1406,11 +1417,11 @@ class Scratch3Interfaz {
     }
     
     pixelAccion(args, util) {
-        if(args.SALIDAS_DIGITALES > MAX_SALIDAS_DIGITALES) return;
+        if(args.SALIDA_DIGITAL > MAX_SALIDAS_DIGITALES) return;
         var i = this.interfaz;
-        var index = args.SALIDAS_DIGITALES - 1;
+        var index = args.SALIDA_DIGITAL - 1;
         if(typeof i.pixels[index] != "undefined" && i.pixels[index].type == "pixel") {
-            var n = (args.POSICION) ? args.POSICION : false;
+            var n = (args.POSICION) ? parseInt(args.POSICION) : false;
             switch(args.SALIDA_DIGITAL_OP) {
                 case 'encender': case 1: 
                     i.pixels[index].encender(n);

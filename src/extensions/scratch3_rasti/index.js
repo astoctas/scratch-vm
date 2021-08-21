@@ -23,8 +23,8 @@ const MAX_SALIDAS_PWM = 3;
 const MAX_SALIDAS_DIGITALES = 4; 
 const MAX_SERVOS =4; 
 const MAX_PINES =4; 
-const THRESHOLD_HIGH = 768;
-const THRESHOLD_LOW = 256;
+const THRESHOLD_HIGH = 75;
+const THRESHOLD_LOW = 25;
 
 var OUTPUT = class {
     /**
@@ -77,10 +77,11 @@ var OUTPUT = class {
     /**
    * Power(): Sets pwm power
    *
-   * @param pow {Integer} power: 0 to 255
+   * @param pow {Integer} power: 0 to 100
    * 
    */
     power(pow) {
+      pow = Math.floor(pow * 100 / 255);
       socket.emit('OUTPUT', { index: this.index, method: 'power', param: pow });
     }
   };
@@ -437,7 +438,7 @@ class Scratch3Rasti {
             servos: [new SERVO(1),new SERVO(2),new SERVO(3),new SERVO(4)],
             digitalValues: [0,0,0,0,0],
             analogValues: [0,0,0,0,0],
-            analogThreshold: [512,512,512,512,512],
+            analogThreshold: [50,50,50,50,50],
             analogHIGH: [false, false, false, false,false],
             analogLOW: [false, false, false, false, false],
             entradaActiva: 0
@@ -500,7 +501,6 @@ class Scratch3Rasti {
                         }                    
                     } 
                 },
-                /*
                 {
                     opcode: 'salidasPotencia',
                     blockType: BlockType.COMMAND,
@@ -521,7 +521,6 @@ class Scratch3Rasti {
                         }                    
                     } 
                 },
-                */
                 {
                     opcode: 'salidasByTime',
                     blockType: BlockType.COMMAND,
@@ -830,7 +829,7 @@ class Scratch3Rasti {
                         },                    
                         ENTRADA_VALOR: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 512
+                            defaultValue: 50
                         }                    
                     }
                 },
@@ -979,7 +978,7 @@ class Scratch3Rasti {
     salidasDigitalesPotencia (args, util) {
         if(args.SALIDASDIGITALES_PARAM > MAX_SALIDAS_PWM) return;
         var s = this.rasti.salidasdigitales[args.SALIDASDIGITALES_PARAM - 1];
-        var p = MathUtil.clamp(255*Cast.toNumber(args.SALIDAS_POT_PARAM)/100, 0, 255);
+        var p = Cast.toNumber(args.SALIDAS_POT_PARAM);
         s.power(p);        
     };
 
@@ -995,7 +994,7 @@ class Scratch3Rasti {
     salidasPotencia (args, util) {
         if(args.MOTORES_PARAM > MAX_SALIDAS) return;
         var s = this.rasti.salidas[args.MOTORES_PARAM - 1];
-        var p = MathUtil.clamp(255*Cast.toNumber(args.SALIDAS_POT_PARAM)/100, 0, 255);
+        var p = Cast.toNumber(args.SALIDAS_POT_PARAM);
         s.power(p);        
     };
 
@@ -1020,10 +1019,10 @@ class Scratch3Rasti {
     ledAccion (args, util) {
         if(args.MOTORES_PARAM > MAX_SALIDAS) return;
         var s = this.rasti.salidas[args.MOTORES_PARAM - 1];
-        s.power(128);
+        s.power(50);
         switch(args.SALIDAS_LED_OP) {
-            case 'encender A': case 1: s.power(128); s.direction(0); s.on(); break;
-            case 'encender B': case 2: s.power(128); s.direction(1); s.on(); break;
+            case 'encender A': case 1: s.power(50); s.direction(0); s.on(); break;
+            case 'encender B': case 2: s.power(50); s.direction(1); s.on(); break;
             case 'apagar': case 3: s.off(); break;
             case 'cambiar': case 4: s.inverse(); break;
             default: s.off();
@@ -1041,10 +1040,10 @@ class Scratch3Rasti {
         }
         
         return new Promise(resolve => {
-            s.power(128);
+            s.power(50);
             switch(args.SALIDAS_LED_OP_TIME) {
-                case 'encender A': case 1: s.power(128); s.direction(0); s.on(); break;
-                case 'encender B': case 2: s.power(128); s.direction(1); s.on(); break;
+                case 'encender A': case 1: s.power(50); s.direction(0); s.on(); break;
+                case 'encender B': case 2: s.power(50); s.direction(1); s.on(); break;
                 default: s.off();
             }
             setTimeout(() => s.off(), time);
@@ -1061,6 +1060,7 @@ class Scratch3Rasti {
         switch(args.ENTRADAS_OP_PARAM) {
             case 'encender': case 1: 
                 s.on(function(data){
+                data.value = Math.floor(data.value * 100 / 1023);
                 i.analogValues[data.index -1 ] = data.value;
                 i.analogHIGH[data.index -1] = data.value > THRESHOLD_HIGH;
                 i.analogLOW[data.index -1] = data.value < THRESHOLD_LOW;
@@ -1215,7 +1215,7 @@ class Scratch3Rasti {
     entradaUmbral (args, util) {
         if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
         var i = this.rasti;
-         i.analogThreshold[args.ENTRADAS_PARAM - 1] = MathUtil.clamp(args.ENTRADA_UMBRAL,0,1023);
+         i.analogThreshold[args.ENTRADAS_PARAM - 1] = MathUtil.clamp(args.ENTRADA_UMBRAL,0,100);
     }
 
     servoPosicion (args, util) {
