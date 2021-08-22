@@ -493,11 +493,18 @@ class Scratch3Interfaz {
             entradaActiva: 0
         }
         var me = this;
+
+        socket.emit("SYSTEM_RESET");
+
         socket.on('DISCONNECTED_MESSAGE', function (data) {
-            me.interfaz.entradas = [new ANALOG(1),new ANALOG(2),new ANALOG(3),new ANALOG(4)];
+            console.log("Interfaz desconectada");
+            me.interfaz.connected = false;
+            me.interfaz.entradas = [new ANALOG(0),new ANALOG(1),new ANALOG(2),new ANALOG(3)];
         });        
-        socket.on('INTERFAZ_CONNECTED', function (data) {
-            me.interfaz.entradas = [new ANALOG(1),new ANALOG(2),new ANALOG(3),new ANALOG(4)];
+        socket.on('CONNECTED_MESSAGE', function (data) {
+            console.log("Interfaz conectada");
+            me.interfaz.connected = true;
+            me.interfaz.entradas = [new ANALOG(0),new ANALOG(1),new ANALOG(2),new ANALOG(3)];
         });   
         socket.on('ANALOG_MESSAGE', function (data) {
             var a = me.interfaz.entradas[data.index];
