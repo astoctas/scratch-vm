@@ -81,7 +81,7 @@ var OUTPUT = class {
    * 
    */
     power(pow) {
-      pow = Math.floor(pow * 100 / 255);
+      //pow = Math.floor(pow * 100 / 255);
       socket.emit('OUTPUT', { index: this.index, method: 'power', param: pow });
     }
   };
@@ -332,6 +332,48 @@ var  DIGITAL = class {
     }    
   }
 
+  var  PING = class {
+    /**
+     * class Ping
+     * @constructor
+     *
+     * @param index {Integer} analog number
+  * 
+  */
+ constructor(index) {
+     this.index = index;
+     this.status = 0;
+     this.type = "ping";
+     this.cm = 0;
+     this.inches = 0;
+     this.callback = function () { };
+     this.interval = 0;
+     var me = this; 
+   }
+   /**
+  * On(): Turns reporting on
+  *
+  * @param callback {Function} callback function
+  */    
+   on(callback) {
+       this.status = 1;
+       socket.emit('PING', { index: this.index, method: 'on' });
+       let me = this;
+       this.interval = setInterval(function() {socket.emit("PING", {index: me.index, method: "ping"})},100)
+       if (typeof callback == "function")
+       this.callback = callback;
+   }
+   /**
+    * Off(): Turns reporting off
+    *
+    */       
+   off() { 
+       this.status = 0;
+       clearInterval(this.interval);
+       //socket.emit('PING', { index: this.index, method: 'off' });
+   }
+ }
+
 /**
  * Device object to connect to device class
  * class Device
@@ -431,11 +473,12 @@ class Scratch3Rasti {
 
         this.rasti = {
             lcd: new LCD,
-            salidas: [new OUTPUT(1),new OUTPUT(2)],
+            salidas: [new OUTPUT(0),new OUTPUT(1)],
             salidasdigitales: [new PIN(1),new PIN(2),new PIN(3), new PIN(4)],
-            entradas: [new ANALOG(1),new ANALOG(2),new ANALOG(3),new ANALOG(4),new ANALOG(5)],
-            digitales: [new DIGITAL(1),new DIGITAL(2),new DIGITAL(3),new DIGITAL(4)],
-            servos: [new SERVO(1),new SERVO(2),new SERVO(3),new SERVO(4)],
+            entradas: [new ANALOG(0),new ANALOG(1),new ANALOG(2),new ANALOG(3),new ANALOG(4)],
+            digitales: [new DIGITAL(0),new DIGITAL(1),new DIGITAL(2),new DIGITAL(3)],
+            servos: [new SERVO(0),new SERVO(1),new SERVO(2),new SERVO(3)],
+            pings: [new PING(0),new PING(1),new PING(2),new PING(3)], 
             digitalValues: [0,0,0,0,0],
             analogValues: [0,0,0,0,0],
             analogThreshold: [50,50,50,50,50],
@@ -443,6 +486,46 @@ class Scratch3Rasti {
             analogLOW: [false, false, false, false, false],
             entradaActiva: 0
         }
+
+        var me = this;
+
+        socket.emit("SYSTEM_RESET");
+
+        socket.on('DISCONNECTED_MESSAGE', function (data) {
+            console.log("Interfaz desconectada");
+            me.rasti.connected = false;
+            me.rasti.entradas = [new ANALOG(0),new ANALOG(1),new ANALOG(2),new ANALOG(3),new ANALOG(4)];
+        });  
+              
+        socket.on('CONNECTED_MESSAGE', function (data) {
+            console.log("Interfaz conectada");
+            me.rasti.connected = true;
+            me.rasti.entradas = [new ANALOG(0),new ANALOG(1),new ANALOG(2),new ANALOG(3),new ANALOG(4)];
+        });  
+
+        socket.on('ANALOG_MESSAGE', function (data) {
+            console.log(data)
+            var a = me.rasti.entradas[data.index];
+            a.callback(data);
+        });              
+        socket.on('DIGITAL_MESSAGE', function (data) {
+            var a = me.rasti.digitales[data.index];
+            a.callback(data);
+        });           
+        socket.on('PING_MESSAGE', function (data) {
+            var a = me.rasti.pings[data.index];
+            //a.cm = data.value;
+            a.callback(data);
+        });       
+        socket.on('I2C_MESSAGE', function (data) {
+            if(typeof me.rasti.i2c[data.address] != undefined) {
+                var a = me.rasti.i2c[data.address];
+                a.callback(data);
+            }
+          }); 
+
+
+
     }
 
     getInfo () {
@@ -471,7 +554,7 @@ class Scratch3Rasti {
                         MOTORES_PARAM: {
                             type: ArgumentType.STRING,
                             menu: 'salidas',
-                            defaultValue: '2' 
+                            defaultValue: '1' 
                         },                    
                         SALIDAS_OP_PARAM: {
                             type: ArgumentType.STRING,
@@ -492,7 +575,7 @@ class Scratch3Rasti {
                         MOTORES_PARAM: {
                             type: ArgumentType.STRING,
                             menu: 'salidas',
-                            defaultValue: '2' 
+                            defaultValue: '1' 
                         },                    
                         SALIDAS_DIR_PARAM: {
                             type: ArgumentType.STRING,
@@ -533,7 +616,7 @@ class Scratch3Rasti {
                         MOTORES_PARAM: {
                             type: ArgumentType.STRING,
                             menu: 'salidas',
-                            defaultValue: '2' 
+                            defaultValue: '1' 
                         },      
                         LEDS_TIME: {
                             type: ArgumentType.NUMBER,
@@ -688,6 +771,7 @@ class Scratch3Rasti {
                         description: 'Reporta el valor de la entrada analógica F'
                     })
                 },
+                /*
                 {
                     opcode: 'entradaValor',
                     blockType: BlockType.REPORTER,
@@ -704,6 +788,7 @@ class Scratch3Rasti {
                         }                    
                     } 
                 },
+                */
                 {
                     opcode: 'entradaEstado',
                     blockType: BlockType.BOOLEAN,
@@ -725,6 +810,7 @@ class Scratch3Rasti {
                         }                    
                     } 
                 },
+                /*
                 {
                     opcode: 'entradaDigitalValor3',
                     blockType: BlockType.REPORTER,
@@ -871,9 +957,72 @@ class Scratch3Rasti {
                         ENTRADAS_OP_PARAM: {
                             type: ArgumentType.STRING,
                             menu: 'entradas_op',
+                            defaultValue: 'apagar' 
+                        }                    
+                    } 
+                },
+                '---',
+                {
+                    opcode: 'ultrasonido',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'interfaz.ultrasonidoAccion',
+                        default: 'ultrasonido [ENTRADAS_PARAM] [ENTRADAS_OP_PARAM]',
+                        description: 'Enciende/apaga el reporte de sensor de ultrasonido'
+                    }),
+                    arguments: {
+                        ENTRADAS_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas',
+                            defaultValue: '4' 
+                        },                    
+                        ENTRADAS_OP_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas_op',
                             defaultValue: 'encender' 
                         }                    
                     } 
+                },   
+                {
+                    opcode: 'ultrasonidoValor',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'interfaz.ultrasonidoValor',
+                        default: 'ultrasonido [ENTRADAS_PARAM] cm',
+                        description: 'Reporta el valor del sensor de ultrasonido'
+                    }),
+                    arguments: {
+                        ENTRADAS_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas',
+                            defaultValue: '4' 
+                        }                    
+                    } 
+                },   
+                {
+                    opcode: 'cuandoUltrasonidoValor',
+                    text: formatMessage({
+                        id: 'interfaz.cuandoUltrasonidoValor',
+                        default: 'cuando ultrasonido [ENTRADAS_PARAM] [ENTRADA_OPERADOR] [ENTRADA_VALOR] cm',
+                        description: 'Cuando el valor del sensor de ultrasonido es  [mayor-menor-igual] que el [valor] en cm'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        ENTRADAS_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas',
+                            defaultValue: '4' 
+                        },                    
+                        ENTRADA_OPERADOR: {
+                            type: ArgumentType.NUMBER,
+                            menu: 'operadores',
+                            defaultValue: '<'
+                        },                    
+                        ENTRADA_VALOR: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 10
+                        }                    
+                    }
                 }
                 /*
                 ,'---',
@@ -912,18 +1061,18 @@ class Scratch3Rasti {
             ],
             menus: {
                 salidas: [
-                    {value: 2, text: 'G'},
-                    {value:1, text:'H'}
+                    {value:1, text: 'G'},
+                    {value:2, text:'H'}
                 ],
                 salidas_op: ['encender', 'apagar', 'invertir'],
                 salidas_digitales_op: ['encender', 'apagar'],
                 leds_op: ['encender A', 'encender B', 'apagar', 'cambiar'],
                 leds_op_time: ['encender A', 'encender B'],
                 entradas: [
-                    {value: 4, text: 'A'},
+                    {value:4, text: 'A'},
                     {value:3, text:'B'},
                     {value:1, text:'C'},
-                    {value:5, text:'D'},
+                    //{value:5, text:'D'},
                     {value:2, text:'F'}
                 ],
                 entradas_op: ['encender', 'apagar'],
@@ -939,7 +1088,7 @@ class Scratch3Rasti {
                     {value:1, text:'F'}
                 ],
                 servos: [
-                    {value: 3, text: 'A'},
+                    {value:3, text: 'A'},
                     {value:4, text:'B'},
                     {value:2, text:'C'},
                     {value:1, text:'F'}
@@ -954,7 +1103,7 @@ class Scratch3Rasti {
 
     salidas (args, util) {
         if(args.MOTORES_PARAM > MAX_SALIDAS) return;
-        var s = this.rasti.salidas[args.MOTORES_PARAM - 1];
+        var s = this.rasti.salidas[args.MOTORES_PARAM -1];
         console.log(args)
         switch(args.SALIDAS_OP_PARAM) {
             case 'encender': case 1: s.on(); break;
@@ -995,6 +1144,7 @@ class Scratch3Rasti {
         if(args.MOTORES_PARAM > MAX_SALIDAS) return;
         var s = this.rasti.salidas[args.MOTORES_PARAM - 1];
         var p = Cast.toNumber(args.SALIDAS_POT_PARAM);
+        p = p > 100 ? 100 : p;
         s.power(p);        
     };
 
@@ -1060,10 +1210,10 @@ class Scratch3Rasti {
         switch(args.ENTRADAS_OP_PARAM) {
             case 'encender': case 1: 
                 s.on(function(data){
-                data.value = Math.floor(data.value * 100 / 1023);
-                i.analogValues[data.index -1 ] = data.value;
-                i.analogHIGH[data.index -1] = data.value > THRESHOLD_HIGH;
-                i.analogLOW[data.index -1] = data.value < THRESHOLD_LOW;
+                var value = Math.floor(data.value * 100 / 1023);
+                i.analogValues[data.index] = value;
+                i.analogHIGH[data.index] = value > THRESHOLD_HIGH;
+                i.analogLOW[data.index] = value < THRESHOLD_LOW;
             }); break;
             case 'apagar': case 2: 
                 s.off(); 
@@ -1082,11 +1232,11 @@ class Scratch3Rasti {
         switch(args.ENTRADAS_OP_PARAM) {
             case 'encender': case 1: 
                 s.on(function(data){
-                i.digitalValues[data.index -1 ] = data.value;
+                i.digitalValues[data.index] = data.value;
             }); break;
             case 'apagar': case 2: 
                 s.off(); 
-                i.analogValues[args.DIGITALES_PARAM -1 ] = 0;
+                i.digitalValues[args.DIGITALES_PARAM -1 ] = 0;
                 break;
             default: s.off();
         }
@@ -1094,9 +1244,9 @@ class Scratch3Rasti {
 
     checkDigitalStatus(index, util) {
         var i = this.rasti;
-        var s = i.digitales[index - 1];
+        var s = i.digitales[index];
         if(!s.status) {
-            this.entradasDigitales({'DIGITALES_PARAM': index, 'ENTRADAS_OP_PARAM': 1}, util);
+            this.entradasDigitales({'DIGITALES_PARAM': index+1, 'ENTRADAS_OP_PARAM': 1}, util);
         }
     }
 
@@ -1122,16 +1272,19 @@ class Scratch3Rasti {
         this.checkDigitalStatus(1, util);
         return i.digitalValues[0]? true : false;
     }
+
     entradaDigitalValor2 (args, util) {
         var i = this.rasti;
         this.checkDigitalStatus(2, util);
         return i.digitalValues[1]? true : false;
     }
+
     entradaDigitalValor3 (args, util) {
         var i = this.rasti;
         this.checkDigitalStatus(3, util);
         return i.digitalValues[2]? true : false;
     }
+
     entradaDigitalValor4 (args, util) {
         var i = this.rasti;
         this.checkDigitalStatus(4, util);
@@ -1143,16 +1296,19 @@ class Scratch3Rasti {
         this.checkAnalogStatus(1, util);
         return i.analogValues[0];
     }
+
     entradaValor2 (args, util) {
         var i = this.rasti;
         this.checkAnalogStatus(2, util);
         return i.analogValues[1];
     }
+
     entradaValor3 (args, util) {
         var i = this.rasti;
         this.checkAnalogStatus(3, util);
         return i.analogValues[2];
     }
+
     entradaValor4 (args, util) {
         var i = this.rasti;
         this.checkAnalogStatus(4, util);
@@ -1225,14 +1381,44 @@ class Scratch3Rasti {
         s.position( MathUtil.clamp(Math.abs(args.SERVOS_POSICION),0,180));
     };
 
-    lcdAccion (args, util) {
-        switch(args.LCD_OP) {
-            case 'encender': case 1:  this.rasti.lcd.encender(); break;
-            case 'apagar': case 3: this.rasti.lcd.apagar(); break;
-            case 'silenciar': case 4: this.rasti.lcd.silenciar(); break;
-            default: s.off();
+    ultrasonido (args, util) {
+        if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
+        var i = this.rasti;
+        var index = args.ENTRADAS_PARAM - 1;
+        switch(args.ENTRADAS_OP_PARAM) {
+            case 'encender': case 1: 
+                //i.pings[index] = new PING(index);
+                i.pings[index].on(function(data){
+                    i.pings[index].cm = data.value
+                });
+            break;
+            case 'apagar': case 2: 
+                if(typeof i.pings[index] != "undefined")
+                    i.pings[index].off();
+            break;
         }
-    };
+    }
+
+    ultrasonidoValor (args, util) {
+        if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
+        var i = this.rasti;
+        var index = args.ENTRADAS_PARAM - 1;
+        if(typeof i.pings[index] != "undefined")
+            return i.pings[index].cm;
+    }
+
+    cuandoUltrasonidoValor (args, util) {
+        if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
+        var i = this.rasti;
+        var s = i.pings[args.ENTRADAS_PARAM - 1];
+        var v = false;
+        switch(args.ENTRADA_OPERADOR) {
+            case '>':   v =  s.cm > Cast.toNumber(args.ENTRADA_VALOR) ; break;
+            case '<':   v =  s.cm < Cast.toNumber(args.ENTRADA_VALOR) ; break;
+            case '=':   v =  s.cm = Cast.toNumber(args.ENTRADA_VALOR) ; break;
+        }
+        return v;
+    }
 }
 
 module.exports = Scratch3Rasti;

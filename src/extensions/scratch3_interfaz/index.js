@@ -693,26 +693,41 @@ class Scratch3Interfaz {
                     } 
                 },'---',
                 {
-                    opcode: 'entradas',
-                    blockType: BlockType.COMMAND,
+                    opcode: 'entradaValor1',
+                    blockType: BlockType.REPORTER,
                     text: formatMessage({
-                        id: 'interfaz.entradasAccion',
-                        default: 'entrada [ENTRADAS_PARAM] [ENTRADAS_OP_PARAM]',
-                        description: 'Enciende/apaga el reporte de entradas'
-                    }),
-                    arguments: {
-                        ENTRADAS_PARAM: {
-                            type: ArgumentType.STRING,
-                            menu: 'entradas',
-                            defaultValue: '1' 
-                        },                    
-                        ENTRADAS_OP_PARAM: {
-                            type: ArgumentType.STRING,
-                            menu: 'entradas_op',
-                            defaultValue: 'encender' 
-                        }                    
-                    } 
+                        id: 'interfaz.entradaValor1',
+                        default: 'entrada 1',
+                        description: 'Reporta el valor de la entrada 1'
+                    })
                 },
+                {
+                    opcode: 'entradaValor2',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'interfaz.entradaValor2',
+                        default: 'entrada 2',
+                        description: 'Reporta el valor de la entrada 2'
+                    })
+                },
+                {
+                    opcode: 'entradaValor3',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'interfaz.entradaValor3',
+                        default: 'entrada 3',
+                        description: 'Reporta el valor de la entrada 3'
+                    })
+                },
+                {
+                    opcode: 'entradaValor4',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'interfaz.entradaValor4',
+                        default: 'entrada 4',
+                        description: 'Reporta el valor de la entrada 4'
+                    })
+                },                
                 {
                     opcode: 'cuandoEntradaValor',
                     text: formatMessage({
@@ -759,42 +774,6 @@ class Scratch3Interfaz {
                         }                    
                     }
                 },
-                {
-                    opcode: 'entradaValor1',
-                    blockType: BlockType.REPORTER,
-                    text: formatMessage({
-                        id: 'interfaz.entradaValor1',
-                        default: 'entrada 1',
-                        description: 'Reporta el valor de la entrada 1'
-                    })
-                },
-                {
-                    opcode: 'entradaValor2',
-                    blockType: BlockType.REPORTER,
-                    text: formatMessage({
-                        id: 'interfaz.entradaValor2',
-                        default: 'entrada 2',
-                        description: 'Reporta el valor de la entrada 2'
-                    })
-                },
-                {
-                    opcode: 'entradaValor3',
-                    blockType: BlockType.REPORTER,
-                    text: formatMessage({
-                        id: 'interfaz.entradaValor3',
-                        default: 'entrada 3',
-                        description: 'Reporta el valor de la entrada 3'
-                    })
-                },
-                {
-                    opcode: 'entradaValor4',
-                    blockType: BlockType.REPORTER,
-                    text: formatMessage({
-                        id: 'interfaz.entradaValor4',
-                        default: 'entrada 4',
-                        description: 'Reporta el valor de la entrada 4'
-                    })
-                },
                 /*
                 {
                     opcode: 'entradaValor',
@@ -834,6 +813,27 @@ class Scratch3Interfaz {
                         }                    
                     } 
                 },
+                {
+                    opcode: 'entradas',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'interfaz.entradasAccion',
+                        default: 'entrada [ENTRADAS_PARAM] [ENTRADAS_OP_PARAM]',
+                        description: 'Enciende/apaga el reporte de entradas'
+                    }),
+                    arguments: {
+                        ENTRADAS_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas',
+                            defaultValue: '1' 
+                        },                    
+                        ENTRADAS_OP_PARAM: {
+                            type: ArgumentType.STRING,
+                            menu: 'entradas_op',
+                            defaultValue: 'apagar' 
+                        }                    
+                    } 
+                },                
                 /*
                 {
                     opcode: 'entradaUmbral',
