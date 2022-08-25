@@ -392,6 +392,15 @@ class Runtime extends EventEmitter {
          * @type {function}
          */
         this.removeCloudVariable = this._initializeRemoveCloudVariable(newCloudDataManager);
+
+        /**
+         * A string representing the origin of the current project from outside of the
+         * Scratch community, such as CSFirst.
+         * @type {?string}
+         */
+        this.origin = null;
+
+        this._initScratchLink();
     }
 
     /**
@@ -600,6 +609,15 @@ class Runtime extends EventEmitter {
      */
     static get PERIPHERAL_LIST_UPDATE () {
         return 'PERIPHERAL_LIST_UPDATE';
+    }
+
+    /**
+     * Event name for when the user picks a bluetooth device to connect to
+     * via Companion Device Manager (CDM)
+     * @const {string}
+     */
+    static get USER_PICKED_PERIPHERAL () {
+        return 'USER_PICKED_PERIPHERAL';
     }
 
     /**
@@ -981,8 +999,10 @@ class Runtime extends EventEmitter {
             fieldName: fieldName,
             extendedName: extendedName,
             argumentTypeInfo: {
-                shadowType: extendedName,
-                fieldType: `field_${extendedName}`
+                shadow: {
+                    type: extendedName,
+                    fieldName: `field_${extendedName}`
+                }
             },
             scratchBlocksDefinition: this._buildCustomFieldTypeForScratchBlocks(
                 extendedName,
@@ -1363,13 +1383,28 @@ class Runtime extends EventEmitter {
 
     /**
      * @returns {Array.<object>} scratch-blocks XML for each category of extension blocks, in category order.
+     * @param {?Target} [target] - the active editing target (optional)
      * @property {string} id - the category / extension ID
      * @property {string} xml - the XML text for this category, starting with `<category>` and ending with `</category>`
      */
-    getBlocksXML () {
+    getBlocksXML (target) {
         return this._blockInfo.map(categoryInfo => {
             const {name, color1, color2} = categoryInfo;
-            const paletteBlocks = categoryInfo.blocks.filter(block => !block.info.hideFromPalette);
+            // Filter out blocks that aren't supposed to be shown on this target, as determined by the block info's
+            // `hideFromPalette` and `filter` properties.
+            const paletteBlocks = categoryInfo.blocks.filter(block => {
+                let blockFilterIncludesTarget = true;
+                // If an editing target is not passed, include all blocks
+                // If the block info doesn't include a `filter` property, always include it
+                if (target && block.info.filter) {
+                    blockFilterIncludesTarget = block.info.filter.includes(
+                        target.isStage ? TargetType.STAGE : TargetType.SPRITE
+                    );
+                }
+                // If the block info's `hideFromPalette` is true, then filter out this block
+                return blockFilterIncludesTarget && !block.info.hideFromPalette;
+            });
+
             const colorXML = `colour="${color1}" secondaryColour="${color2}"`;
 
             // Use a menu icon if there is one. Otherwise, use the block icon. If there's no icon,
@@ -1405,6 +1440,36 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * One-time initialization for Scratch Link support.
+     */
+    _initScratchLink () {
+        /* global globalThis */
+        // Check that we're actually in a real browser, not Node.js or JSDOM, and we have a valid-looking origin.
+        if (globalThis.document &&
+            globalThis.document.getElementById &&
+            globalThis.origin &&
+            globalThis.origin !== 'null' &&
+            globalThis.navigator &&
+            globalThis.navigator.userAgent &&
+            globalThis.navigator.userAgent.includes &&
+            !globalThis.navigator.userAgent.includes('Node.js') &&
+            !globalThis.navigator.userAgent.includes('jsdom')
+        ) {
+            // Create a script tag for the Scratch Link browser extension, unless one already exists
+            const scriptElement = document.getElementById('scratch-link-extension-script');
+            if (!scriptElement) {
+                const script = document.createElement('script');
+                script.id = 'scratch-link-extension-script';
+                document.body.appendChild(script);
+
+                // Tell the browser extension to inject its script.
+                // If the extension isn't present or isn't active, this will do nothing.
+                globalThis.postMessage('inject-scratch-link-script', globalThis.origin);
+            }
+        }
+    }
+
+    /**
      * Get a scratch link socket.
      * @param {string} type Either BLE or BT
      * @returns {ScratchLinkSocket} The scratch link socket.
@@ -1429,7 +1494,11 @@ class Runtime extends EventEmitter {
      * @returns {ScratchLinkSocket} The new scratch link socket (a WebSocket object)
      */
     _defaultScratchLinkSocketFactory (type) {
-        return new ScratchLinkWebSocket(type);
+        const Scratch = self.Scratch;
+        const ScratchLinkSafariSocket = Scratch && Scratch.ScratchLinkSafariSocket;
+        // detect this every time in case the user turns on the extension after loading the page
+        const useSafariSocket = ScratchLinkSafariSocket && ScratchLinkSafariSocket.isSafariHelperCompatible();
+        return useSafariSocket ? new ScratchLinkSafariSocket(type) : new ScratchLinkWebSocket(type);
     }
 
     /**
@@ -1538,14 +1607,6 @@ class Runtime extends EventEmitter {
     attachRenderer (renderer) {
         this.renderer = renderer;
         this.renderer.setLayerGroupOrdering(StageLayering.LAYER_GROUPS);
-    }
-
-    /**
-     * Set the svg adapter, which converts scratch 2 svgs to scratch 3 svgs
-     * @param {!SvgRenderer} svgAdapter The adapter to attach
-     */
-    attachV2SVGAdapter (svgAdapter) {
-        this.v2SvgAdapter = svgAdapter;
     }
 
     /**
@@ -1833,6 +1894,7 @@ class Runtime extends EventEmitter {
         this.targets.map(this.disposeTarget, this);
         this._monitorState = OrderedMap({});
         this.emit(Runtime.RUNTIME_DISPOSED);
+        this.ioDevices.clock.resetProjectTimer();
         // @todo clear out extensions? turboMode? etc.
 
         // *********** Cloud *******************
@@ -2550,6 +2612,15 @@ class Runtime extends EventEmitter {
             this._step();
         }, interval);
         this.emit(Runtime.RUNTIME_STARTED);
+    }
+
+    /**
+     * Quit the Runtime, clearing any handles which might keep the process alive.
+     * Do not use the runtime after calling this method. This method is meant for test shutdown.
+     */
+    quit () {
+        clearInterval(this._steppingInterval);
+        this._steppingInterval = null;
     }
 
     /**
