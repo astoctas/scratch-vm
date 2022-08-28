@@ -406,7 +406,7 @@ var   LCD = class {
    on(callback) {
        this.status = 1;
        socket.emit('PING', { index: this.index, method: 'on' });
-       this.interval = setInterval(function() {socket.emit("PING", {index:0, method: "ping"})},100)
+       //this.interval = setInterval(function() {socket.emit("PING", {index:0, method: "ping"})},100)
        if (typeof callback == "function")
        this.callback = callback;
    }
