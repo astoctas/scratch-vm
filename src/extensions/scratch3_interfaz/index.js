@@ -405,7 +405,7 @@ var   LCD = class {
   */    
    on(callback) {
        this.status = 1;
-       socket.emit('PING', { index: this.index, method: 'on' });
+       socket.emit('ULTRASONIC', { index: this.index, method: 'on' });
        //this.interval = setInterval(function() {socket.emit("PING", {index:0, method: "ping"})},100)
        if (typeof callback == "function")
        this.callback = callback;
@@ -417,7 +417,7 @@ var   LCD = class {
    off() { 
        this.status = 0;
        //clearInterval(this.interval);
-       socket.emit('PING', { index: this.index, method: 'off' });
+       socket.emit('ULTRASONIC', { index: this.index, method: 'off' });
    }
  }
 
@@ -514,8 +514,8 @@ class Scratch3Interfaz {
             var a = me.interfaz.digitales[data.index];
             a.callback(data);
         });           
-        socket.on('PING_MESSAGE', function (data) {
-            var a = me.interfaz.pings[data.index];
+        socket.on('ULTRASONIC_MESSAGE', function (data) {
+            var a = me.interfaz.pings[data.index - 1];
             //a.cm = data.value;
             a.callback(data);
         });       
@@ -1369,6 +1369,7 @@ class Scratch3Interfaz {
             case 'encender': case 1: 
                 //i.pings[index] = new PING(index);
                 i.pings[index].on(function(data){
+                    //console.log(index, data)
                     i.pings[index].cm = data.value
                 });
             break;

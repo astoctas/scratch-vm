@@ -357,7 +357,7 @@ var  DIGITAL = class {
   */    
    on(callback) {
        this.status = 1;
-       socket.emit('PING', { index: this.index, method: 'on' });
+       socket.emit('ULTRASONIC', { index: this.index, method: 'on' });
        let me = this;
        //this.interval = setInterval(function() {socket.emit("PING", {index: me.index, method: "ping"})},100)
        if (typeof callback == "function")
@@ -370,7 +370,7 @@ var  DIGITAL = class {
    off() { 
        this.status = 0;
        //clearInterval(this.interval);
-       socket.emit('PING', { index: this.index, method: 'off' });
+       socket.emit('ULTRASONIC', { index: this.index, method: 'off' });
    }
  }
 
@@ -512,8 +512,8 @@ class Scratch3Rasti {
             var a = me.rasti.digitales[data.index];
             a.callback(data);
         });           
-        socket.on('PING_MESSAGE', function (data) {
-            var a = me.rasti.pings[data.index];
+        socket.on('ULTRASONIC_MESSAGE', function (data) {
+            var a = me.rasti.pings[data.index - 1];
             //a.cm = data.value;
             a.callback(data);
         });       
