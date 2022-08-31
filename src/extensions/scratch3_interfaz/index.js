@@ -416,8 +416,8 @@ var   LCD = class {
     */       
    off() { 
        this.status = 0;
-       clearInterval(this.interval);
-       //socket.emit('PING', { index: this.index, method: 'off' });
+       //clearInterval(this.interval);
+       socket.emit('PING', { index: this.index, method: 'off' });
    }
  }
 

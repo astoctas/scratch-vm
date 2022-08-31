@@ -359,7 +359,7 @@ var  DIGITAL = class {
        this.status = 1;
        socket.emit('PING', { index: this.index, method: 'on' });
        let me = this;
-       this.interval = setInterval(function() {socket.emit("PING", {index: me.index, method: "ping"})},100)
+       //this.interval = setInterval(function() {socket.emit("PING", {index: me.index, method: "ping"})},100)
        if (typeof callback == "function")
        this.callback = callback;
    }
@@ -369,8 +369,8 @@ var  DIGITAL = class {
     */       
    off() { 
        this.status = 0;
-       clearInterval(this.interval);
-       //socket.emit('PING', { index: this.index, method: 'off' });
+       //clearInterval(this.interval);
+       socket.emit('PING', { index: this.index, method: 'off' });
    }
  }
 
