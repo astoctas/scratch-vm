@@ -56,7 +56,6 @@
     "jszip": "^3.1.5",
     "minilog": "3.1.0",
     "scratch-parser": "5.0.0",
-    "scratch-render-fonts": "^1.0.0-prerelease.20210401210003",
     "scratch-sb1-converter": "0.2.7",
     "scratch-translate-extension-languages": "0.0.20191118205314",
     "socket.io-client": "^4.1.3",
