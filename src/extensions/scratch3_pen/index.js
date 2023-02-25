@@ -314,7 +314,7 @@ class Scratch3PenBlocks {
                     opcode: 'penDown',
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
-                        id: 'pen.penDownn',
+                        id: 'pen.penDown',
                         default: 'pen down',
                         description: 'start leaving a trail when the sprite moves'
                     }),
