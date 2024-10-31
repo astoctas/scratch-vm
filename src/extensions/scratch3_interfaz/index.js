@@ -8,10 +8,11 @@ const log = require('../../util/log');
 const MathUtil = require('../../util/math-util');
 
 const io = require('socket.io-client');
+const { is } = require('immutable');
 //const io = require('http://localhost:4268/socket.io/socket.io.js');
 //const io = require('../../../node_modules/socket.io-client/dist/socket.io');
 
-var socket = io.connect('http://localhost:4268');
+var socket;
 
 const blockIconURI = "data:image/svg+xml;utf8;base64,PD94bWwgdmVyc2lvbj0iMS4wIj8+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBoZWlnaHQ9IjUxMnB4IiB2aWV3Qm94PSItNDYgMCA1MTIgNTEyIiB3aWR0aD0iNTEycHgiPjxwYXRoIGQ9Im00MTAgNDMwdjcyaC02MHYtMTEyaDIwYzIyLjA4OTg0NCAwIDQwIDE3LjkxMDE1NiA0MCA0MHptMCAwIiBmaWxsPSIjNjc2ZTc0Ii8+PHBhdGggZD0ibTMxMC4wNTA3ODEgOTBoLTIwMC4xMDE1NjJjLTIyLjA4OTg0NCAwLTQwIDE3LjkxMDE1Ni00MCA0MHYxNDBjMCAyMi4wODk4NDQgMTcuOTEwMTU2IDQwIDQwIDQwaDIwMC4xMDE1NjJjMjIuMDg5ODQ0IDAgNDAtMTcuOTEwMTU2IDQwLTQwdi0xNDBjMC0yMi4wODk4NDQtMTcuOTEwMTU2LTQwLTQwLTQwem0wIDAiIGZpbGw9IiNmZjgwYWMiLz48cGF0aCBkPSJtMzEwIDM1MGgtMjAwYy0yMi4wODk4NDQgMC00MCAxNy45MTAxNTYtNDAgNDB2MTEyaDI4MHYtMTEyYzAtMjIuMDg5ODQ0LTE3LjkxMDE1Ni00MC00MC00MHptMCAwIiBmaWxsPSIjZmY4MGFjIi8+PGcgZmlsbD0iI2ZmZjM1YyI+PHBhdGggZD0ibTMxMCAxNjBjMCAxNi41NzAzMTItMTMuNDI5Njg4IDMwLTMwIDMwcy0zMC0xMy40Mjk2ODgtMzAtMzAgMTMuNDI5Njg4LTMwIDMwLTMwIDMwIDEzLjQyOTY4OCAzMCAzMHptMCAwIi8+PHBhdGggZD0ibTI3MCAyMzBoLTEyMGMtMTEuMDUwNzgxIDAtMjAgOC45NDkyMTktMjAgMjB2NjBoMTYwdi02MGMwLTExLjA1MDc4MS04Ljk0OTIxOS0yMC0yMC0yMHptMCAwIi8+PHBhdGggZD0ibTI3MCA0NTB2NTJoLTEyMHYtNTJjMC0xMS4wNTA3ODEgOC45NDkyMTktMjAgMjAtMjBoODBjMTEuMDUwNzgxIDAgMjAgOC45NDkyMTkgMjAgMjB6bTAgMCIvPjwvZz48cGF0aCBkPSJtMTUwIDMxMGgxMjB2NDBoLTEyMHptMCAwIiBmaWxsPSIjNjc2ZTc0Ii8+PHBhdGggZD0ibTI3MCA3MHYyMGgtMTIwdi0yMGMwLTExLjA1MDc4MSA4Ljk0OTIxOS0yMCAyMC0yMGg4MGMxMS4wNTA3ODEgMCAyMCA4Ljk0OTIxOSAyMCAyMHptMCAwIiBmaWxsPSIjNjc2ZTc0Ii8+PHBhdGggZD0ibTE3MCAxNjBjMCAxNi41NzAzMTItMTMuNDI5Njg4IDMwLTMwIDMwcy0zMC0xMy40Mjk2ODgtMzAtMzAgMTMuNDI5Njg4LTMwIDMwLTMwIDMwIDEzLjQyOTY4OCAzMCAzMHptMCAwIiBmaWxsPSIjZmZmMzVjIi8+PHBhdGggZD0ibTcwIDM5MHYxMTJoLTYwdi03MmMwLTIyLjA4OTg0NCAxNy45MTAxNTYtNDAgNDAtNDB6bTAgMCIgZmlsbD0iIzY3NmU3NCIvPjxwYXRoIGQ9Im0xMCA1MTJoNDAwYzUuNTIzNDM4IDAgMTAtNC40NzY1NjIgMTAtMTB2LTcyYzAtMjcuNTcwMzEyLTIyLjQyOTY4OC01MC01MC01MGgtMTEuMDA3ODEyYy00LjY0NDUzMi0yMi43OTY4NzUtMjQuODQzNzUtNDAtNDguOTkyMTg4LTQwaC0zMHYtMjBoMzAuMDUwNzgxYzI3LjU3MDMxMyAwIDQ5Ljk0OTIxOS0yMi40Mjk2ODggNDkuOTQ5MjE5LTUwdi0xNDBjMC0yNy41NzAzMTItMjIuMzc4OTA2LTUwLTQ5Ljk0OTIxOS01MGgtMzAuMDUwNzgxdi0xMGMwLTE2LjU0Mjk2OS0xMy40NTcwMzEtMzAtMzAtMzBoLTMwdi0zMGMwLTUuNTIzNDM4LTQuNDc2NTYyLTEwLTEwLTEwcy0xMCA0LjQ3NjU2Mi0xMCAxMHYzMGgtMzBjLTE2LjU0Mjk2OSAwLTMwIDEzLjQ1NzAzMS0zMCAzMHYxMGgtMzAuMDUwNzgxYy0yNy41NzAzMTMgMC00OS45NDkyMTkgMjIuNDI5Njg4LTQ5Ljk0OTIxOSA1MHY2MGMwIDUuNTIzNDM4IDQuNDI1NzgxIDEwIDkuOTQ5MjE5IDEwIDUuNTIzNDM3IDAgMTAtNC40NzY1NjIgMTAtMTB2LTIwaDIxLjMxNjQwNmM0LjQ1MzEyNSAxNy4yMzQzNzUgMjAuMTI4OTA2IDMwIDM4LjczNDM3NSAzMCAyMi4wNTQ2ODggMCA0MC0xNy45NDUzMTIgNDAtNDBzLTE3Ljk0NTMxMi00MC00MC00MGMtMTguNjA1NDY5IDAtMzQuMjgxMjUgMTIuNzY1NjI1LTM4LjczNDM3NSAzMGgtMjEuMzE2NDA2di0yMGMwLTE2LjU0Mjk2OSAxMy40NTcwMzEtMzAgMzAtMzBoMjAwLjEwMTU2MmMxNi41NDI5NjkgMCAzMCAxMy40NTcwMzEgMzAgMzB2MjBoLTIxLjMxNjQwNmMtNC40NTMxMjUtMTcuMjM0Mzc1LTIwLjEyODkwNi0zMC0zOC43MzQzNzUtMzAtMjIuMDU0Njg4IDAtNDAgMTcuOTQ1MzEyLTQwIDQwczE3Ljk0NTMxMiA0MCA0MCA0MGMxOC42MDU0NjkgMCAzNC4yODEyNS0xMi43NjU2MjUgMzguNzM0Mzc1LTMwaDIxLjMxNjQwNnYxMDBjMCAxNi41NDI5NjktMTMuNDU3MDMxIDMwLTMwIDMwaC0xMC4wNTA3ODF2LTUwYzAtMTYuNTQyOTY5LTEzLjQ1NzAzMS0zMC0zMC0zMGgtMTIwYy0xNi41NDI5NjkgMC0zMCAxMy40NTcwMzEtMzAgMzB2NTBoLTEwLjA1MDc4MWMtMTYuNTQyOTY5IDAtMzAtMTMuNDU3MDMxLTMwLTMwIDAtNS41MjM0MzgtNC40NzY1NjMtMTAtMTAtMTAtNS41MjM0MzggMC0xMCA0LjQ3NjU2Mi0xMCAxMCAwIDI3LjU3MDMxMiAyMi40Mjk2ODcgNTAgNTAgNTBoMzAuMDUwNzgxdjIwaC0zMGMtMjQuMTQ0NTMxIDAtNDQuMzQ3NjU2IDE3LjIwMzEyNS00OC45OTIxODggNDBoLTExLjAwNzgxMmMtMjcuNTcwMzEyIDAtNTAgMjIuNDI5Njg4LTUwIDUwdjcyYzAgNS41MjM0MzggNC40NzY1NjIgMTAgMTAgMTB6bTEzMC0zNzJjMTEuMDI3MzQ0IDAgMjAgOC45NzI2NTYgMjAgMjBzLTguOTcyNjU2IDIwLTIwIDIwLTIwLTguOTcyNjU2LTIwLTIwIDguOTcyNjU2LTIwIDIwLTIwem0yMC03MGMwLTUuNTE1NjI1IDQuNDg0Mzc1LTEwIDEwLTEwaDgwYzUuNTE1NjI1IDAgMTAgNC40ODQzNzUgMTAgMTB2MTBoLTEwMHptMTIwIDExMGMtMTEuMDI3MzQ0IDAtMjAtOC45NzI2NTYtMjAtMjBzOC45NzI2NTYtMjAgMjAtMjAgMjAgOC45NzI2NTYgMjAgMjAtOC45NzI2NTYgMjAtMjAgMjB6bS0yMCAzMTJoLTEwMHYtNDJjMC01LjUxNTYyNSA0LjQ4NDM3NS0xMCAxMC0xMGg4MGM1LjUxNTYyNSAwIDEwIDQuNDg0Mzc1IDEwIDEwem0xNDAtNjJ2NjJoLTQwdi05MmgxMGMxNi41NDI5NjkgMCAzMCAxMy40NTcwMzEgMzAgMzB6bS0yNTAtMTkwaDEyMGM1LjUxNTYyNSAwIDEwIDQuNDg0Mzc1IDEwIDEwdjEwaC0xNDB2LTEwYzAtNS41MTU2MjUgNC40ODQzNzUtMTAgMTAtMTB6bS0xMCA0MGgxNDB2MjBoLTE0MHptMjAgNDBoMTAwdjIwaC0xMDB6bS01MCA0MGgyMDBjMTYuNTQyOTY5IDAgMzAgMTMuNDU3MDMxIDMwIDMwdjEwMmgtNjB2LTQyYzAtMTYuNTQyOTY5LTEzLjQ1NzAzMS0zMC0zMC0zMGgtODBjLTE2LjU0Mjk2OSAwLTMwIDEzLjQ1NzAzMS0zMCAzMHY0MmgtNjB2LTEwMmMwLTE2LjU0Mjk2OSAxMy40NTcwMzEtMzAgMzAtMzB6bS02MCA0MGgxMHY5MmgtNDB2LTYyYzAtMTYuNTQyOTY5IDEzLjQ1NzAzMS0zMCAzMC0zMHptMCAwIi8+PHBhdGggZD0ibTgwIDIzMGMwIDUuNTIzNDM4LTQuNDc2NTYyIDEwLTEwIDEwcy0xMC00LjQ3NjU2Mi0xMC0xMCA0LjQ3NjU2Mi0xMCAxMC0xMCAxMCA0LjQ3NjU2MiAxMCAxMHptMCAwIi8+PC9zdmc+Cg==";
 
@@ -140,7 +141,7 @@ var   SERVO = class {
    * 
    */
     constructor(index) {
-      this.index = index;
+      this.index = index + 9;
     }
     /**
    * Position(): Sets position
@@ -167,6 +168,10 @@ var   SERVO = class {
       this.type = "analog";
       this.callback = function () { };
       var me = this;
+      this.interval = 0;
+      this.value = 0;
+      this.high = false;
+      this.low = false;
     }
     /**
    * On(): Turns reporting on
@@ -177,7 +182,17 @@ var   SERVO = class {
         this.status = 1;
         socket.emit('ANALOG', { index: this.index, method: 'on' });
         if (typeof callback == "function")
-        this.callback = callback;
+            this.callback = callback;
+            /*
+        this.interval = setInterval(()=>{
+            socket.emit('ANALOG', { index: this.index, method: 'value' }, (data) => {
+                data = Math.floor(data * 100 / 1023);
+                this.value = data;
+                this.high = data > THRESHOLD_HIGH;
+                this.low = data < THRESHOLD_LOW;
+
+            })}, 100);
+            */
     }
     /**
      * Off(): Turns reporting off
@@ -186,6 +201,7 @@ var   SERVO = class {
     off() { 
         this.status = 0;
       socket.emit('ANALOG', { index: this.index, method: 'off' });
+      clearInterval(this.interval)
     }
   }
   
@@ -353,10 +369,10 @@ var   LCD = class {
    * @constructor
    *
    * 
-   */
     constructor() {
     }
-
+    */
+    
     /**
    * encender(): Turns on
    *
@@ -389,7 +405,7 @@ var   LCD = class {
   * 
   */
  constructor(index) {
-     this.index = index;
+     this.index = index + 14;
      this.status = 0;
      this.type = "ping";
      this.cm = 0;
@@ -405,8 +421,15 @@ var   LCD = class {
   */    
    on(callback) {
        this.status = 1;
-       socket.emit('ULTRASONIC', { index: this.index, method: 'on' });
-       //this.interval = setInterval(function() {socket.emit("PING", {index:0, method: "ping"})},100)
+       socket.emit('PING', { index: this.index, method: 'on' });
+       me = this;
+       /*
+       this.interval = setInterval(()=> {
+            socket.emit("PING", {index: this.index, method: "value"}, (v) => {
+                me.cm = v;
+            })
+        },100)
+        */
        if (typeof callback == "function")
        this.callback = callback;
    }
@@ -417,7 +440,7 @@ var   LCD = class {
    off() { 
        this.status = 0;
        //clearInterval(this.interval);
-       socket.emit('ULTRASONIC', { index: this.index, method: 'off' });
+       socket.emit('PING', { index: this.index, method: 'off' });
    }
  }
 
@@ -430,8 +453,9 @@ var   LCD = class {
    * 
    */
   constructor(index) {
-    this.index = index;
+    this.index = index + 9;
     this.type = "pixel";
+    this.create(1);
   }
     /**
    * create(length): Create strip
@@ -474,13 +498,15 @@ var   LCD = class {
 class Scratch3Interfaz {
     constructor (runtime) {
         this.runtime = runtime;
+        this.connected = false;
+
         //this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
 
         this.interfaz = {
-            lcd: new LCD,
+            lcd: new LCD(),
             salidas: [new OUTPUT(0),new OUTPUT(1),new OUTPUT(2),new OUTPUT(3)],
             entradas: [new ANALOG(0),new ANALOG(1),new ANALOG(2),new ANALOG(3)],
-            digitales: [new DIGITAL(1),new DIGITAL(2),new DIGITAL(3),new DIGITAL(4)],
+            digitales: [new DIGITAL(0),new DIGITAL(1),new DIGITAL(2),new DIGITAL(3)],
             servos: [new SERVO(0),new SERVO(1)],
             pixels: [], 
             i2c: [],
@@ -492,39 +518,74 @@ class Scratch3Interfaz {
             analogLOW: [false, false, false, false],
             entradaActiva: 0
         }
+
+        this.socket = io.connect('http://localhost:4268');
+        this.setSocketListeners();
+        socket = this.socket; 
+
+
         var me = this;
+        /*
+         setInterval(() => {
+            console.log(this.connected, this.socket)
+            if(!me.connected) {
+                me.socket = io.connect('http://localhost:4268');
+                me.setSocketListeners();
+                socket = me.socket;
+            }
+         },2000)
+         */ 
+    }
 
-        socket.emit("SYSTEM_RESET");
+    setSocketListeners() {
+        var me = this;
+        var s = this.socket;
 
-        socket.on('DISCONNECTED_MESSAGE', function (data) {
+        s.emit("SYSTEM_RESET");
+
+        s.on('connect', function (reason) {
+            me.connected = true;
+            console.log("socket conectado")
+        })
+
+        s.on('disconnect', function (reason) {
+            console.log("socket desconectado");
+            me.connected = false;
+        })
+
+        s.on('DISCONNECTED_MESSAGE', function (data) {
             console.log("Interfaz desconectada");
             me.interfaz.connected = false;
             me.interfaz.entradas = [new ANALOG(0),new ANALOG(1),new ANALOG(2),new ANALOG(3)];
         });        
-        socket.on('CONNECTED_MESSAGE', function (data) {
+        s.on('CONNECTED_MESSAGE', function (data) {
             console.log("Interfaz conectada");
+            me.connected = true;
             me.interfaz.connected = true;
             me.interfaz.entradas = [new ANALOG(0),new ANALOG(1),new ANALOG(2),new ANALOG(3)];
         });   
-        socket.on('ANALOG_MESSAGE', function (data) {
+        s.on('ANALOG_MESSAGE', function (data) {
             var a = me.interfaz.entradas[data.index];
             a.callback(data);
         });              
-        socket.on('DIGITAL_MESSAGE', function (data) {
+        s.on('DIGITAL_MESSAGE', function (data) {
             var a = me.interfaz.digitales[data.index];
             a.callback(data);
-        });           
-        socket.on('ULTRASONIC_MESSAGE', function (data) {
-            var a = me.interfaz.pings[data.index - 1];
-            //a.cm = data.value;
-            a.callback(data);
         });       
-        socket.on('I2C_MESSAGE', function (data) {
+        s.on('PING_MESSAGE', function (data) {
+            var a = me.interfaz.pings[data.index - 14];
+            //a.cm = data.value;
+            console.log(a, data, data.value)
+            a.callback(data); 
+        });       
+        s.on('I2C_MESSAGE', function (data) {
             if(typeof me.interfaz.i2c[data.address] != undefined) {
                 var a = me.interaz.i2c[data.address];
                 a.callback(data);
             }
-          }); 
+          });   
+          
+        
     }
 
     getInfo () {
@@ -947,6 +1008,7 @@ class Scratch3Interfaz {
                     }
                 },
                 '---',
+                /*
                 {
                     opcode: 'pixelCreate',
                     text: formatMessage({
@@ -967,6 +1029,7 @@ class Scratch3Interfaz {
                         }                    
                     }
                 },
+                */
                 {
                     opcode: 'pixelAccion',
                     text: formatMessage({
@@ -988,6 +1051,7 @@ class Scratch3Interfaz {
                         }                    
                     }
                 },
+                /*
                 {
                     opcode: 'pixelAccionPos',
                     text: formatMessage({
@@ -1013,11 +1077,12 @@ class Scratch3Interfaz {
                         }                    
                     }
                 },
+                */
                 {
                     opcode: 'pixelColor',
                     text: formatMessage({
                         id: 'interfaz.pixelColor',
-                        default: 'Pixel Led [SALIDA_DIGITAL] todos [COLOR] ',
+                        default: 'Pixel Led [SALIDA_DIGITAL] [COLOR] ',
                         description: 'Crea una tira de pixel leds'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1032,6 +1097,7 @@ class Scratch3Interfaz {
                         }                    
                     }
                 },
+                /*
                 {
                     opcode: 'pixelColorPos',
                     text: formatMessage({
@@ -1055,6 +1121,7 @@ class Scratch3Interfaz {
                         }                    
                     }
                 },
+                */
                 '---',
                 {
                     opcode: 'lcdAccion',
@@ -1068,7 +1135,7 @@ class Scratch3Interfaz {
                         LCD_OP: {
                             type: ArgumentType.STRING,
                             menu: 'lcd_op',
-                            defaultValue: 'slienciar' 
+                            defaultValue: 'apagar' 
                         }                    
                     }
                 }
@@ -1093,7 +1160,7 @@ class Scratch3Interfaz {
                 direccion: ['a','b'],
                 estados: ['alto','bajo'],
                 operadores: ['>','<', '='],
-                lcd_op: ['encender', 'silenciar'],
+                lcd_op: ['encender', 'apagar'],
             }
         };
     }
@@ -1203,10 +1270,11 @@ class Scratch3Interfaz {
         args.ENTRADAS_PARAM = parseInt(args.ENTRADAS_PARAM);
         if(args.ENTRADAS_PARAM > MAX_ENTRADAS) return;
         var i = this.interfaz;
-        i.entradaActiva = args.ENTRADAS_PARAM - 1;
+        index = args.ENTRADAS_PARAM - 1;
+        i.entradaActiva = index;
+        var s = i.entradas[index];
         switch(args.ENTRADAS_OP_PARAM) {
             case 'encender': case 1: 
-                var s = i.entradas[args.ENTRADAS_PARAM - 1];
                 if(s.status) return;
                 if(s.type == "digital") {
                     s.on(function(data){
@@ -1215,19 +1283,18 @@ class Scratch3Interfaz {
                } else {
                    s.on(function(data){
                        data.value = Math.floor(data.value * 100 / 1023);
-                       i.analogValues[data.index] = data.value;
-                       i.analogHIGH[data.index] = data.value > THRESHOLD_HIGH;
-                       i.analogLOW[data.index] = data.value < THRESHOLD_LOW;
+                       s.value = data.value;
+                       s.high = data.value > THRESHOLD_HIGH;
+                       s.low = data.value < THRESHOLD_LOW;
                    }); 
                }
             break;
             case 'apagar': case 2: 
-                var s = i.entradas[args.ENTRADAS_PARAM - 1];
                 s.off(); 
                 if(s.type == "analog") {
-                    i.analogValues[args.ENTRADAS_PARAM -1 ] = 0;
-                    i.analogHIGH[args.ENTRADAS_PARAM -1] = false;
-                    i.analogLOW[args.ENTRADAS_PARAM -1] = false;
+                    s.value = 0;
+                    s.high = false;
+                    s.low = false;
                 }
                 if(s.type == "digital") {
                     i.digitalValues[args.ENTRADAS_PARAM -1 ] = 0;
@@ -1256,28 +1323,28 @@ class Scratch3Interfaz {
         var index = 0;
         this.checkEntradaStatus(1, util);
         var s = i.entradas[index];
-        return s.type == "analog" ? i.analogValues[index] : i.digitalValues[index];
+        return s.type == "analog" ? s.value : i.digitalValues[index];
     }
     entradaValor2 (args, util) {
         var i = this.interfaz;
         var index = 1;
         this.checkEntradaStatus(2, util);
         var s = i.entradas[index];
-        return s.type == "analog" ? i.analogValues[index] : i.digitalValues[index];
+        return s.type == "analog" ? s.value : i.digitalValues[index];
     }
     entradaValor3 (args, util) {
         var i = this.interfaz;
         var index = 2;
         this.checkEntradaStatus(3, util);
         var s = i.entradas[index];
-        return s.type == "analog" ? i.analogValues[index] : i.digitalValues[index];
+        return s.type == "analog" ? s.value : i.digitalValues[index];
     }
     entradaValor4 (args, util) {
         var i = this.interfaz;
         var index = 3;
         this.checkEntradaStatus(4, util);
         var s = i.entradas[index];
-        return s.type == "analog" ? i.analogValues[index] : i.digitalValues[index];
+        return s.type == "analog" ? s.value : i.digitalValues[index];
     }
 
 
@@ -1291,10 +1358,10 @@ class Scratch3Interfaz {
         this.checkEntradaStatus(args.ENTRADAS_PARAM, util);
         switch(args.ENTRADA_ESTADO) {
             case 'alto': case 1:  
-                v = (s.type == "analog")  ? i.analogHIGH[args.ENTRADAS_PARAM - 1]  : i.digitalValues[args.ENTRADAS_PARAM - 1] == 1;
+                v = (s.type == "analog")  ? s.high  : i.digitalValues[args.ENTRADAS_PARAM - 1] == 1;
             break;
             case 'bajo': case 0:  
-                v = (s.type == "analog")  ? i.analogLOW[args.ENTRADAS_PARAM - 1]  : i.digitalValues[args.ENTRADAS_PARAM - 1] == 0;
+                v = (s.type == "analog")  ? s.low  : i.digitalValues[args.ENTRADAS_PARAM - 1] == 0;
             break;
         }
         return v;
@@ -1308,10 +1375,10 @@ class Scratch3Interfaz {
         this.checkEntradaStatus(args.ENTRADAS_PARAM, util);
         switch(args.ENTRADA_ESTADO) {
             case 'alto': case 1:  
-                v = (s.type == "analog")  ? i.analogHIGH[args.ENTRADAS_PARAM - 1]  : i.digitalValues[args.ENTRADAS_PARAM - 1] == 1;
+                v = (s.type == "analog")  ?  s.high  : i.digitalValues[args.ENTRADAS_PARAM - 1] == 1;
             break;
             case 'bajo': case 0:  
-                v = (s.type == "analog")  ? i.analogLOW[args.ENTRADAS_PARAM - 1]  : i.digitalValues[args.ENTRADAS_PARAM - 1] == 0;
+                v = (s.type == "analog")  ? s.low  : i.digitalValues[args.ENTRADAS_PARAM - 1] == 0;
             break;
         }
         return v;
@@ -1325,9 +1392,9 @@ class Scratch3Interfaz {
         if(s.type == "digital") return false;
         this.checkEntradaStatus(args.ENTRADAS_PARAM, util);
         switch(args.ENTRADA_OPERADOR) {
-            case '>':   v =  i.analogValues[args.ENTRADAS_PARAM - 1] > Cast.toNumber(args.ENTRADA_VALOR) ; break;
-            case '<':   v =  i.analogValues[args.ENTRADAS_PARAM - 1] < Cast.toNumber(args.ENTRADA_VALOR) ; break;
-            case '=':   v =  i.analogValues[args.ENTRADAS_PARAM - 1] = Cast.toNumber(args.ENTRADA_VALOR) ; break;
+            case '>':   v =  s.value > Cast.toNumber(args.ENTRADA_VALOR) ; break;
+            case '<':   v =  s.value < Cast.toNumber(args.ENTRADA_VALOR) ; break;
+            case '=':   v =  s.value = Cast.toNumber(args.ENTRADA_VALOR) ; break;
         }
         return v;
     }
@@ -1370,7 +1437,7 @@ class Scratch3Interfaz {
                 //i.pings[index] = new PING(index);
                 i.pings[index].on(function(data){
                     //console.log(index, data)
-                    i.pings[index].cm = data.value
+                    i.pings[index].cm = data.value.cm
                 });
             break;
             case 'apagar': case 2: 
@@ -1414,6 +1481,7 @@ class Scratch3Interfaz {
         if(args.SALIDA_DIGITAL > MAX_SALIDAS_DIGITALES) return;
         var i = this.interfaz;
         var index = args.SALIDA_DIGITAL - 1;
+        if(typeof i.pixels[index] == "undefined") i.pixels[index] = new PIXEL(index);
         if(typeof i.pixels[index] != "undefined" && i.pixels[index].type == "pixel") {
             var n = (args.POSICION) ? parseInt(args.POSICION) : false;
             i.pixels[index].color(args.COLOR, n);
@@ -1428,6 +1496,7 @@ class Scratch3Interfaz {
         if(args.SALIDA_DIGITAL > MAX_SALIDAS_DIGITALES) return;
         var i = this.interfaz;
         var index = args.SALIDA_DIGITAL - 1;
+        if(typeof i.pixels[index] == "undefined") i.pixels[index] = new PIXEL(index);
         if(typeof i.pixels[index] != "undefined" && i.pixels[index].type == "pixel") {
             var n = (args.POSICION) ? parseInt(args.POSICION) : false;
             switch(args.SALIDA_DIGITAL_OP) {
